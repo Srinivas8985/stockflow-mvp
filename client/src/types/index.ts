@@ -1,4 +1,7 @@
 export * from './auth';
+export * from './product';
+export * from './analytics';
+export * from './settings';
 
 export interface ApiResponse<T = unknown> {
   success: boolean;
@@ -11,6 +14,14 @@ export interface ApiResponse<T = unknown> {
   meta?: {
     timestamp: string;
     version: string;
+    pagination?: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+      hasNext?: boolean;
+      hasPrev?: boolean;
+    };
     [key: string]: unknown;
   };
 }

@@ -21,6 +21,7 @@ import {
   LogOut,
   LogIn,
   UserPlus,
+  LayoutDashboard,
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -42,7 +43,7 @@ export default function HomePage() {
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               StockFlow
             </h1>
-            <Badge variant="success">Phase 2 Ready</Badge>
+            <Badge variant="success">Phase 5 Complete</Badge>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Multi-Tenant SaaS Inventory Management System
@@ -52,6 +53,12 @@ export default function HomePage() {
         <div className="flex items-center gap-3">
           {isAuthenticated ? (
             <div className="flex items-center gap-3">
+              <Link href="/dashboard">
+                <Button size="sm" className="flex items-center gap-1.5 text-xs font-semibold">
+                  <LayoutDashboard className="h-3.5 w-3.5" />
+                  Dashboard
+                </Button>
+              </Link>
               <div className="text-right hidden sm:block">
                 <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                   {user?.name}

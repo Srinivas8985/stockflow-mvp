@@ -349,6 +349,99 @@ describe('Phase 3: Inventory Management - Product CRUD & Tenant Isolation', () =
 
       assert.equal(res.status, 400);
     });
+
+    it('should increase quantity from 0 to 1 and persist', async () => {
+      // First set to 0
+      await fetch(`${baseUrl}/products/${createdProductA1Id}/quantity`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${tokenA}`,
+        },
+        body: JSON.stringify({ quantity: 0 }),
+      });
+
+      // Increase to 1
+      const res = await fetch(`${baseUrl}/products/${createdProductA1Id}/quantity`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${tokenA}`,
+        },
+        body: JSON.stringify({ quantity: 1 }),
+      });
+      const body = await res.json();
+      assert.equal(res.status, 200);
+      assert.equal(body.data.quantity, 1);
+
+      // Verify persistence via GET
+      const getRes = await fetch(`${baseUrl}/products/${createdProductA1Id}`, {
+        headers: { Authorization: `Bearer ${tokenA}` },
+      });
+      const getBody = await getRes.json();
+      assert.equal(getBody.data.quantity, 1);
+    });
+
+    it('should decrease quantity from 1 to 0 and persist', async () => {
+      const res = await fetch(`${baseUrl}/products/${createdProductA1Id}/quantity`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${tokenA}`,
+        },
+        body: JSON.stringify({ quantity: 0 }),
+      });
+      const body = await res.json();
+      assert.equal(res.status, 200);
+      assert.equal(body.data.quantity, 0);
+
+      // Verify persistence via GET
+      const getRes = await fetch(`${baseUrl}/products/${createdProductA1Id}`, {
+        headers: { Authorization: `Bearer ${tokenA}` },
+      });
+      const getBody = await getRes.json();
+      assert.equal(getBody.data.quantity, 0);
+    });
+
+    it('should reject attempt to decrease quantity below 0', async () => {
+      const res = await fetch(`${baseUrl}/products/${createdProductA1Id}/quantity`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${tokenA}`,
+        },
+        body: JSON.stringify({ quantity: -1 }),
+      });
+      assert.equal(res.status, 400);
+    });
+
+    it('should increase quantity multiple times', async () => {
+      for (const targetQty of [1, 2, 3]) {
+        const res = await fetch(`${baseUrl}/products/${createdProductA1Id}/quantity`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${tokenA}`,
+          },
+          body: JSON.stringify({ quantity: targetQty }),
+        });
+        const body = await res.json();
+        assert.equal(res.status, 200);
+        assert.equal(body.data.quantity, targetQty);
+      }
+    });
+
+    it('should enforce cross-organization isolation on quantity update', async () => {
+      const res = await fetch(`${baseUrl}/products/${createdProductA1Id}/quantity`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${tokenB}`,
+        },
+        body: JSON.stringify({ quantity: 999 }),
+      });
+      assert.equal(res.status, 404);
+    });
   });
 
   // ---------------------------------------------------------------------------

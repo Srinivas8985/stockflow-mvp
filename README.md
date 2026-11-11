@@ -646,3 +646,49 @@ The test suite covers full end-to-end multi-tenant isolation, inventory CRUD, an
    - Updating and reading default low-stock threshold with Zod validation.
    - Strict rejection of invalid thresholds (negative, floats, unexpected properties).
    - Complete cross-tenant isolation of metrics, products, and configurations.
+
+4. **Frontend Integration & Validation (`client/tests/frontend.test.ts`)**:
+   - Signup and login client-side validation rules (password complexity, email regex, required organization).
+   - JWT storage persistence and session cleanup on logout.
+   - Protected route access control evaluation and automatic redirection.
+   - Effective threshold calculation (product-specific vs. organization default).
+   - Product query parameter builder for search and filtering.
+   - Product creation and update payload sanitization.
+   - Deletion confirmation dialog ID binding.
+   - Organization settings threshold boundaries (non-negative integer enforcement).
+
+---
+
+## 13. Frontend Architecture & User Interface (Phase 5)
+
+StockFlow provides a modern B2B SaaS web interface built with Next.js 14 App Router, React 18, and Tailwind CSS.
+
+### Key Pages & Navigation:
+
+1. **Authentication (`/login`, `/signup`)**:
+   - Organization registration with initial admin user.
+   - Credential validation with feedback.
+   - Automatic redirection for authenticated sessions.
+2. **Dashboard (`/dashboard`)**:
+   - Live aggregated metrics: Total Products, Total Quantity On Hand, and Low Stock Alerts.
+   - Low-stock replenishment table with effective threshold comparison and restock shortcuts.
+   - Empty-state illustrations for both clean inventories and zero-product accounts.
+3. **Inventory Management (`/products`)**:
+   - Responsive product data table with SKU, prices, quantity, and stock status badges.
+   - Dedicated inline stock stepper controls (+ and - buttons) next to every product for single-unit adjustments.
+   - Strict boundary enforcement: prevents decreasing quantity below zero.
+   - Concurrency lock: disables buttons and shows loading spinner during update to prevent duplicate requests.
+   - Real-time search by product name and SKU.
+   - Low-stock filter toggle.
+   - Server-side pagination controls.
+   - Product creation and editing modals with validation and duplicate SKU error handling.
+   - Quick stock quantity adjustment modal (+1, +10, -1, -10 and direct input).
+   - Destructive deletion confirmation dialog.
+4. **Organization Settings (`/settings`)**:
+   - Tenant metadata display (organization name, organization ID, admin email, creation date).
+   - Configurable default low-stock threshold with instant persistence.
+5. **Reusable Application Layout (`AppLayout`)**:
+   - Collapsible mobile navigation drawer and persistent desktop sidebar.
+   - Route highlight indication (`/dashboard`, `/products`, `/settings`).
+   - Session guard that routes unauthenticated users directly to `/login`.
+   - User profile badge and sign-out button.

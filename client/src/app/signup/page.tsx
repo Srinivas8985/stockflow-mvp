@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/features/auth/AuthContext';
@@ -10,23 +10,66 @@ import { AlertCircle, Lock, Mail, User, Building, ArrowRight } from 'lucide-reac
 
 export default function SignupPage() {
   const router = useRouter();
-  const { signup, error, clearError } = useAuth();
+  const { signup, isAuthenticated, isLoading: authLoading, error, clearError } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     organizationName: '',
   });
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, authLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
-    setIsSubmitting(true);
+    setValidationError(null);
 
+    // Client-side validations
+    if (!formData.organizationName.trim()) {
+      setValidationError('Organization name is required');
+      return;
+    }
+    if (!formData.name.trim()) {
+      setValidationError('Your full name is required');
+      return;
+    }
+    if (!formData.email.trim()) {
+      setValidationError('Email address is required');
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      setValidationError('Please enter a valid email address');
+      return;
+    }
+    if (!formData.password) {
+      setValidationError('Password is required');
+      return;
+    }
+    if (formData.password.length < 8) {
+      setValidationError('Password must be at least 8 characters long');
+      return;
+    }
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+      setValidationError('Password must contain at least one uppercase letter, one lowercase letter, and one number');
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      await signup(formData);
-      router.push('/');
+      await signup({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+        organizationName: formData.organizationName.trim(),
+      });
+      router.push('/dashboard');
     } catch {
       // Error handled by AuthContext
     } finally {
@@ -34,24 +77,26 @@ export default function SignupPage() {
     }
   };
 
+  const displayedError = validationError || error;
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950">
-      <Card className="w-full max-w-lg border-slate-200 dark:border-slate-800 shadow-lg">
-        <CardHeader className="text-center">
-          <div className="mx-auto h-12 w-12 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-bold text-xl shadow-md mb-2">
+      <Card className="w-full max-w-lg border-slate-200 dark:border-slate-800 shadow-xl bg-white dark:bg-slate-900">
+        <CardHeader className="text-center pb-2">
+          <div className="mx-auto h-12 w-12 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-bold text-xl shadow-md shadow-emerald-600/20 mb-3">
             SF
           </div>
-          <CardTitle className="text-2xl">Create Your Organization</CardTitle>
-          <CardDescription>
-            Register your organization and administrative account
+          <CardTitle className="text-2xl font-bold tracking-tight">Create Your Organization</CardTitle>
+          <CardDescription className="text-slate-500 text-xs mt-1">
+            Register your organization and initial administrator account
           </CardDescription>
         </CardHeader>
 
-        <CardContent>
-          {error && (
-            <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-xs flex items-center gap-2">
+        <CardContent className="pt-4">
+          {displayedError && (
+            <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-xs flex items-center gap-2">
               <AlertCircle className="h-4 w-4 shrink-0" />
-              <span>{error}</span>
+              <span>{displayedError}</span>
             </div>
           )}
 
@@ -68,8 +113,11 @@ export default function SignupPage() {
                   type="text"
                   required
                   value={formData.organizationName}
-                  onChange={(e) => setFormData({ ...formData, organizationName: e.target.value })}
-                  placeholder="e.g. Acme Warehouses"
+                  onChange={(e) => {
+                    setFormData({ ...formData, organizationName: e.target.value });
+                    if (validationError) setValidationError(null);
+                  }}
+                  placeholder="e.g. Acme Logistics"
                   className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
@@ -77,7 +125,7 @@ export default function SignupPage() {
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Your Full Name
+                Administrator Full Name
               </label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
@@ -87,8 +135,11 @@ export default function SignupPage() {
                   type="text"
                   required
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="John Doe"
+                  onChange={(e) => {
+                    setFormData({ ...formData, name: e.target.value });
+                    if (validationError) setValidationError(null);
+                  }}
+                  placeholder="Jane Doe"
                   className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
@@ -96,7 +147,7 @@ export default function SignupPage() {
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Work Email
+                Work Email Address
               </label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
@@ -106,8 +157,11 @@ export default function SignupPage() {
                   type="email"
                   required
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="john@company.com"
+                  onChange={(e) => {
+                    setFormData({ ...formData, email: e.target.value });
+                    if (validationError) setValidationError(null);
+                  }}
+                  placeholder="jane@acme.com"
                   className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
@@ -115,7 +169,7 @@ export default function SignupPage() {
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Password (min 8 chars, 1 uppercase, 1 lowercase, 1 digit)
+                Password (min 8 chars, 1 uppercase, 1 lowercase, 1 number)
               </label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
@@ -124,9 +178,11 @@ export default function SignupPage() {
                 <input
                   type="password"
                   required
-                  minLength={8}
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, password: e.target.value });
+                    if (validationError) setValidationError(null);
+                  }}
                   placeholder="••••••••"
                   className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
@@ -135,18 +191,18 @@ export default function SignupPage() {
 
             <Button
               type="submit"
-              className="w-full mt-2"
+              className="w-full mt-2 font-medium"
               isLoading={isSubmitting}
             >
-              Register Organization <ArrowRight className="h-4 w-4 ml-2" />
+              Register Organization <ArrowRight className="h-4 w-4 ml-1.5" />
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-xs text-slate-500 dark:text-slate-400">
+          <div className="mt-6 text-center text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-4">
             Already have an organization?{' '}
             <Link
               href="/login"
-              className="text-emerald-600 font-semibold hover:underline"
+              className="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline"
             >
               Sign in
             </Link>
@@ -156,4 +212,3 @@ export default function SignupPage() {
     </div>
   );
 }
-

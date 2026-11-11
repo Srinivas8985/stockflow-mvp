@@ -5,8 +5,14 @@ import {
   AuthResponseData,
   SignupInput,
   LoginInput,
-  User,
   Organization,
+  Product,
+  CreateProductInput,
+  UpdateProductInput,
+  ProductsQuery,
+  DashboardAnalytics,
+  OrganizationSettings,
+  UpdateSettingsInput,
 } from '@/types';
 
 const API_BASE_URL =
@@ -47,7 +53,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
     const data: ApiResponse<T> = await response.json();
 
-    if (!response.ok && !data.data) {
+    if (!response.ok) {
       throw new ApiClientError(
         data.message || `Request failed with status ${response.status}`,
         response.status,
@@ -98,6 +104,52 @@ export const api = {
       request<Organization>('/organization/current', {
         method: 'PATCH',
         body: JSON.stringify(data),
+      }),
+  },
+
+  products: {
+    list: (query?: ProductsQuery) => {
+      const params = new URLSearchParams();
+      if (query?.page) params.append('page', String(query.page));
+      if (query?.limit) params.append('limit', String(query.limit));
+      if (query?.search && query.search.trim()) params.append('search', query.search.trim());
+      if (query?.lowStock !== undefined) params.append('lowStock', String(query.lowStock));
+
+      const qs = params.toString();
+      return request<Product[]>(`/products${qs ? `?${qs}` : ''}`);
+    },
+    getById: (id: string) => request<Product>(`/products/${id}`),
+    create: (input: CreateProductInput) =>
+      request<Product>('/products', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    update: (id: string, input: UpdateProductInput) =>
+      request<Product>(`/products/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(input),
+      }),
+    updateQuantity: (id: string, quantity: number) =>
+      request<Product>(`/products/${id}/quantity`, {
+        method: 'PATCH',
+        body: JSON.stringify({ quantity }),
+      }),
+    delete: (id: string) =>
+      request<{ id: string; deleted: boolean }>(`/products/${id}`, {
+        method: 'DELETE',
+      }),
+  },
+
+  analytics: {
+    getDashboard: () => request<DashboardAnalytics>('/analytics/dashboard'),
+  },
+
+  settings: {
+    get: () => request<OrganizationSettings>('/settings'),
+    update: (input: UpdateSettingsInput) =>
+      request<OrganizationSettings>('/settings', {
+        method: 'PATCH',
+        body: JSON.stringify(input),
       }),
   },
 };
