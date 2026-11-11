@@ -19,16 +19,12 @@ export async function tenantContext(req: Request, _res: Response, next: NextFunc
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const org = await (prisma as any).organization.findFirst({
-      where: tenantId ? { id: tenantId } : { slug: headerTenantSlug },
+    const org = await (prisma as any).organization.findUnique({
+      where: { id: tenantId },
     });
 
     if (!org) {
       return next(AppError.notFound('Organization / Tenant not found'));
-    }
-
-    if (org.status !== 'ACTIVE') {
-      return next(AppError.forbidden(`Organization account is currently ${org.status.toLowerCase()}`));
     }
 
     // If authenticated user belongs to another organization, block access
@@ -39,9 +35,6 @@ export async function tenantContext(req: Request, _res: Response, next: NextFunc
     req.tenant = {
       id: org.id,
       name: org.name,
-      slug: org.slug,
-      plan: org.plan,
-      status: org.status,
     };
 
     next();

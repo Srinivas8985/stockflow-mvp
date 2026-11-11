@@ -3,7 +3,7 @@ import {
   HealthCheckData,
   ApiWelcomeData,
   AuthResponseData,
-  RegisterInput,
+  SignupInput,
   LoginInput,
   User,
   Organization,
@@ -26,7 +26,7 @@ export class ApiClientError extends Error {
 
 function getStoredToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('stockflow_access_token');
+  return localStorage.getItem('stockflow_token');
 }
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
@@ -72,8 +72,8 @@ export const api = {
   getWelcome: () => request<ApiWelcomeData>('/'),
 
   auth: {
-    register: (input: RegisterInput) =>
-      request<AuthResponseData>('/auth/register', {
+    signup: (input: SignupInput) =>
+      request<AuthResponseData>('/auth/signup', {
         method: 'POST',
         body: JSON.stringify(input),
       }),
@@ -82,26 +82,22 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(input),
       }),
-    refreshToken: (refreshToken: string) =>
-      request<{ accessToken: string; refreshToken: string }>('/auth/refresh', {
-        method: 'POST',
-        body: JSON.stringify({ refreshToken }),
-      }),
-    logout: (refreshToken?: string) =>
-      request<null>('/auth/logout', {
-        method: 'POST',
-        body: JSON.stringify({ refreshToken }),
-      }),
-    getMe: () => request<{ user: User; organization: Organization }>('/auth/me'),
+    getMe: () =>
+      request<{
+        id: string;
+        organizationId: string;
+        name: string;
+        email: string;
+        organization: Organization;
+      }>('/auth/me'),
   },
 
   organization: {
     getCurrent: () => request<Organization>('/organization/current'),
-    updateCurrent: (data: Partial<Organization>) =>
+    updateCurrent: (data: { name: string }) =>
       request<Organization>('/organization/current', {
         method: 'PATCH',
         body: JSON.stringify(data),
       }),
-    getMembers: () => request<User[]>('/organization/members'),
   },
 };

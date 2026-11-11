@@ -1,283 +1,157 @@
 import { prisma } from '../../config/database';
-import {
-  hashPassword,
-  verifyPassword,
-  generateAccessToken,
-  generateRefreshToken,
-  hashToken,
-} from '../../utils/security';
+import { hashPassword, comparePassword } from '../../utils/password';
+import { signJwt } from '../../utils/jwt';
 import { AppError } from '../../utils/appError';
-import { RegisterInput, LoginInput } from './auth.schema';
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
+import { SignupInput, LoginInput } from './auth.schema';
 
 export class AuthService {
-  async register(input: RegisterInput) {
-    const slug = input.organizationSlug ? slugify(input.organizationSlug) : slugify(input.organizationName);
+  /**
+   * Registers a new organization and its initial administrator user in a single atomic transaction.
+   */
+  async signup(input: SignupInput) {
+    const normalizedEmail = input.email.trim().toLowerCase();
 
-    // Check slug collision
+    // Check if an account with this email already exists
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const existingOrg = await (prisma as any).organization.findUnique({
-      where: { slug },
+    const existingUser = await (prisma as any).user.findUnique({
+      where: { email: normalizedEmail },
     });
 
-    if (existingOrg) {
-      throw AppError.conflict('An organization with this slug/name already exists. Please choose a unique name.');
+    if (existingUser) {
+      throw AppError.conflict('An account with this email already exists');
     }
 
+    // Hash password securely with bcrypt
     const passwordHash = await hashPassword(input.password);
 
-    // Atomically create Organization and initial Owner
+    // Create Organization and initial User atomically in a single Prisma transaction
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await (prisma as any).$transaction(async (tx: any) => {
-      const org = await tx.organization.create({
+      const organization = await tx.organization.create({
         data: {
-          name: input.organizationName,
-          slug,
-          plan: 'FREE',
-          status: 'ACTIVE',
+          name: input.organizationName.trim(),
         },
       });
 
       const user = await tx.user.create({
         data: {
-          organizationId: org.id,
-          email: input.email,
+          organizationId: organization.id,
+          name: input.name.trim(),
+          email: normalizedEmail,
           passwordHash,
-          firstName: input.firstName,
-          lastName: input.lastName,
-          role: 'OWNER',
-          isActive: true,
         },
       });
 
-      return { org, user };
+      return { organization, user };
     });
 
-    // Issue tokens
-    const tokenPayload = {
+    // Generate JWT token containing trusted user and organization identifiers
+    const token = signJwt({
       userId: result.user.id,
+      organizationId: result.organization.id,
       email: result.user.email,
-      role: result.user.role,
-      organizationId: result.org.id,
-      organizationSlug: result.org.slug,
-    };
-
-    const accessToken = generateAccessToken(tokenPayload);
-    const { rawToken, tokenHash, expiresAt } = generateRefreshToken();
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).refreshToken.create({
-      data: {
-        userId: result.user.id,
-        tokenHash,
-        expiresAt,
-      },
+      name: result.user.name,
     });
 
     return {
       user: {
         id: result.user.id,
+        organizationId: result.organization.id,
+        name: result.user.name,
         email: result.user.email,
-        firstName: result.user.firstName,
-        lastName: result.user.lastName,
-        role: result.user.role,
+        createdAt: result.user.createdAt,
       },
       organization: {
-        id: result.org.id,
-        name: result.org.name,
-        slug: result.org.slug,
-        plan: result.org.plan,
+        id: result.organization.id,
+        name: result.organization.name,
+        createdAt: result.organization.createdAt,
       },
-      tokens: {
-        accessToken,
-        refreshToken: rawToken,
-      },
+      token,
     };
   }
 
+  /**
+   * Authenticates user credentials and issues a JWT token.
+   * Returns a generic invalid-credentials response to avoid email enumeration.
+   */
   async login(input: LoginInput) {
-    let whereClause: Record<string, unknown> = { email: input.email };
-
-    if (input.organizationSlug) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const org = await (prisma as any).organization.findUnique({
-        where: { slug: input.organizationSlug },
-      });
-      if (!org) {
-        throw AppError.unauthorized('Invalid organization or user credentials');
-      }
-      whereClause = {
-        organizationId: org.id,
-        email: input.email,
-      };
-    }
+    const normalizedEmail = input.email.trim().toLowerCase();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const user = await (prisma as any).user.findUnique({
+      where: { email: normalizedEmail },
+      include: {
+        organization: true,
+      },
+    });
+
+    // Use generic error response whether user does not exist or password fails
+    if (!user) {
+      throw AppError.unauthorized('Invalid email or password');
+    }
+
+    const isPasswordValid = await comparePassword(input.password, user.passwordHash);
+    if (!isPasswordValid) {
+      throw AppError.unauthorized('Invalid email or password');
+    }
+
+    const token = signJwt({
+      userId: user.id,
+      organizationId: user.organization.id,
+      email: user.email,
+      name: user.name,
+    });
+
+    return {
+      user: {
+        id: user.id,
+        organizationId: user.organization.id,
+        name: user.name,
+        email: user.email,
+        createdAt: user.createdAt,
+      },
+      organization: {
+        id: user.organization.id,
+        name: user.organization.name,
+        createdAt: user.organization.createdAt,
+      },
+      token,
+    };
+  }
+
+  /**
+   * Returns the authenticated user profile and associated organization.
+   * Strictly enforces organization boundary check using authenticated context.
+   */
+  async getMe(userId: string, organizationId: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const user = await (prisma as any).user.findFirst({
-      where: whereClause,
+      where: {
+        id: userId,
+        organizationId,
+      },
       include: {
         organization: true,
       },
     });
 
     if (!user) {
-      throw AppError.unauthorized('Invalid email or password');
-    }
-
-    if (!user.isActive) {
-      throw AppError.forbidden('User account is deactivated. Please contact your organization administrator.');
-    }
-
-    if (user.organization.status !== 'ACTIVE') {
-      throw AppError.forbidden('Organization account is suspended.');
-    }
-
-    const isMatch = await verifyPassword(input.password, user.passwordHash);
-    if (!isMatch) {
-      throw AppError.unauthorized('Invalid email or password');
-    }
-
-    // Issue tokens
-    const tokenPayload = {
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-      organizationId: user.organization.id,
-      organizationSlug: user.organization.slug,
-    };
-
-    const accessToken = generateAccessToken(tokenPayload);
-    const { rawToken, tokenHash, expiresAt } = generateRefreshToken();
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).refreshToken.create({
-      data: {
-        userId: user.id,
-        tokenHash,
-        expiresAt,
-      },
-    });
-
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-      },
-      organization: {
-        id: user.organization.id,
-        name: user.organization.name,
-        slug: user.organization.slug,
-        plan: user.organization.plan,
-      },
-      tokens: {
-        accessToken,
-        refreshToken: rawToken,
-      },
-    };
-  }
-
-  async refreshToken(rawRefreshToken: string) {
-    const hashed = hashToken(rawRefreshToken);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const storedToken = await (prisma as any).refreshToken.findUnique({
-      where: { tokenHash: hashed },
-      include: {
-        user: {
-          include: { organization: true },
-        },
-      },
-    });
-
-    if (!storedToken || storedToken.revoked || storedToken.expiresAt < new Date()) {
-      throw AppError.unauthorized('Invalid or expired refresh token');
-    }
-
-    if (!storedToken.user.isActive || storedToken.user.organization.status !== 'ACTIVE') {
-      throw AppError.forbidden('Account is no longer active');
-    }
-
-    // Token rotation: Revoke old token
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).refreshToken.update({
-      where: { id: storedToken.id },
-      data: { revoked: true },
-    });
-
-    // Issue new pair
-    const tokenPayload = {
-      userId: storedToken.user.id,
-      email: storedToken.user.email,
-      role: storedToken.user.role,
-      organizationId: storedToken.user.organization.id,
-      organizationSlug: storedToken.user.organization.slug,
-    };
-
-    const newAccessToken = generateAccessToken(tokenPayload);
-    const { rawToken, tokenHash, expiresAt } = generateRefreshToken();
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).refreshToken.create({
-      data: {
-        userId: storedToken.user.id,
-        tokenHash,
-        expiresAt,
-      },
-    });
-
-    return {
-      accessToken: newAccessToken,
-      refreshToken: rawToken,
-    };
-  }
-
-  async logout(rawRefreshToken: string) {
-    const hashed = hashToken(rawRefreshToken);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).refreshToken.updateMany({
-      where: { tokenHash: hashed },
-      data: { revoked: true },
-    });
-  }
-
-  async getMe(userId: string) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = await (prisma as any).user.findUnique({
-      where: { id: userId },
-      include: { organization: true },
-    });
-
-    if (!user) {
-      throw AppError.notFound('User not found');
+      throw AppError.notFound('User profile not found');
     }
 
     return {
       id: user.id,
+      organizationId: user.organization.id,
+      name: user.name,
       email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
+      createdAt: user.createdAt,
       organization: {
         id: user.organization.id,
         name: user.organization.name,
-        slug: user.organization.slug,
-        plan: user.organization.plan,
-        status: user.organization.status,
+        createdAt: user.organization.createdAt,
       },
     };
   }
 }
 
 export const authService = new AuthService();
-

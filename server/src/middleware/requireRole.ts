@@ -7,7 +7,7 @@ export function requireRole(allowedRoles: string[]) {
       return next(AppError.unauthorized('Authentication required'));
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    if (!req.user.role || !allowedRoles.includes(req.user.role)) {
       return next(
         AppError.forbidden(`Access restricted to roles: ${allowedRoles.join(', ')}`)
       );

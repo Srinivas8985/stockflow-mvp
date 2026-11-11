@@ -10,7 +10,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Baseline system check
+// System health verification model from Phase 1
 model SystemHealth {
   id        String   @id @default(uuid())
   status    String   @default("ok")
@@ -23,62 +23,56 @@ model SystemHealth {
 // Phase 2: Multi-Tenancy & Authentication Models
 // -----------------------------------------------------------------------------
 
-enum OrganizationRole {
-  OWNER
-  ADMIN
-  MANAGER
-  MEMBER
-}
-
-enum OrganizationPlan {
-  FREE
-  STARTER
-  PRO
-  ENTERPRISE
-}
-
 model Organization {
-  id        String           @id @default(uuid())
-  name      String
-  slug      String           @unique
-  plan      OrganizationPlan @default(FREE)
-  status    String           @default("ACTIVE") // ACTIVE, SUSPENDED, ARCHIVED
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  id                       String    @id @default(uuid())
+  name                     String
+  defaultLowStockThreshold Int       @default(10)
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
 
-  users     User[]
+  // Enforce one user per organization for this MVP
+  user     User?
+  products Product[]
 
   @@map("organizations")
 }
 
 model User {
-  id             String           @id @default(uuid())
-  organizationId String
-  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  email          String
+  id             String       @id @default(uuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  email          String       @unique
   passwordHash   String
-  firstName      String
-  lastName       String
-  role           OrganizationRole @default(MEMBER)
-  isActive       Boolean          @default(true)
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
-  refreshTokens  RefreshToken[]
-
-  @@unique([organizationId, email])
   @@index([email])
   @@map("users")
 }
 
-model RefreshToken {
-  id        String   @id @default(uuid())
-  tokenHash String   @unique
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
-  revoked   Boolean  @default(false)
-  createdAt DateTime @default(now())
+// -----------------------------------------------------------------------------
+// Phase 3: Inventory Management - Product Model
+// -----------------------------------------------------------------------------
 
-  @@map("refresh_tokens")
+model Product {
+  id                String       @id @default(uuid())
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name              String
+  sku               String
+  description       String?
+  quantity          Int          @default(0)
+  costPrice         Decimal?     @db.Decimal(12, 2)
+  sellingPrice      Decimal?     @db.Decimal(12, 2)
+  lowStockThreshold Int?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  // Enforce composite uniqueness on organizationId and sku
+  @@unique([organizationId, sku])
+  @@index([organizationId])
+  @@index([organizationId, name])
+  @@index([organizationId, createdAt])
+  @@map("products")
 }

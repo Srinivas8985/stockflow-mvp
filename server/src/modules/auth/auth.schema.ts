@@ -1,37 +1,39 @@
 import { z } from 'zod';
 
-export const registerSchema = z.object({
-  organizationName: z
-    .string()
-    .min(2, 'Organization name must be at least 2 characters')
-    .max(100),
-  organizationSlug: z
-    .string()
-    .min(2, 'Slug must be at least 2 characters')
-    .max(50)
-    .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase alphanumeric characters and hyphens')
-    .optional(),
-  email: z.string().email('Valid email address is required').toLowerCase(),
+export const signupSchema = z.object({
+  name: z
+    .string({ required_error: 'Name is required' })
+    .trim()
+    .min(1, 'Name cannot be empty')
+    .max(100, 'Name must be 100 characters or fewer'),
+  email: z
+    .string({ required_error: 'Email is required' })
+    .trim()
+    .toLowerCase()
+    .email('Invalid email address format'),
   password: z
-    .string()
-    .min(8, 'Password must be at least 8 characters')
+    .string({ required_error: 'Password is required' })
+    .min(8, 'Password must be at least 8 characters long')
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
     .regex(/[0-9]/, 'Password must contain at least one number'),
-  firstName: z.string().min(1, 'First name is required').max(50),
-  lastName: z.string().min(1, 'Last name is required').max(50),
+  organizationName: z
+    .string({ required_error: 'Organization name is required' })
+    .trim()
+    .min(1, 'Organization name cannot be empty')
+    .max(100, 'Organization name must be 100 characters or fewer'),
 });
 
 export const loginSchema = z.object({
-  email: z.string().email('Valid email is required').toLowerCase(),
-  password: z.string().min(1, 'Password is required'),
-  organizationSlug: z.string().optional(),
+  email: z
+    .string({ required_error: 'Email is required' })
+    .trim()
+    .toLowerCase()
+    .email('Invalid email address format'),
+  password: z
+    .string({ required_error: 'Password is required' })
+    .min(1, 'Password is required'),
 });
 
-export const refreshTokenSchema = z.object({
-  refreshToken: z.string().min(1, 'Refresh token is required'),
-});
-
-export type RegisterInput = z.infer<typeof registerSchema>;
+export type SignupInput = z.infer<typeof signupSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
-export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
-

@@ -9,6 +9,9 @@ import healthRoutes from './modules/health/health.routes';
 import welcomeRoutes from './modules/welcome/welcome.routes';
 import authRoutes from './modules/auth/auth.routes';
 import organizationRoutes from './modules/organization/organization.routes';
+import inventoryRoutes from './modules/inventory/inventory.routes';
+import analyticsRoutes from './modules/analytics/analytics.routes';
+import settingsRoutes from './modules/settings/settings.routes';
 
 export function createApp(): Application {
   const app: Application = express();
@@ -47,6 +50,9 @@ export function createApp(): Application {
   apiRouter.use('/', healthRoutes);
   apiRouter.use('/auth', authRoutes);
   apiRouter.use('/organization', organizationRoutes);
+  apiRouter.use('/products', inventoryRoutes);
+  apiRouter.use('/analytics', analyticsRoutes);
+  apiRouter.use('/settings', settingsRoutes);
 
   app.use(env.API_PREFIX, apiRouter);
 

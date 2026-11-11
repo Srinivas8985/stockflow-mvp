@@ -1,7 +1,4 @@
-// Settings Module - To be implemented in Phase 5
-// Scope: Tenant configuration, notification preferences, system audit
-export const settingsModule = {
-  name: 'settings',
-  status: 'planned',
-};
-
+export * from './settings.schema';
+export * from './settings.service';
+export * from './settings.controller';
+export { default as settingsRoutes } from './settings.routes';

@@ -1,18 +1,19 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { User, Organization, RegisterInput, LoginInput } from '@/types';
+import { User, Organization, SignupInput, LoginInput } from '@/types';
 import { api, ApiClientError } from '@/lib/api';
 
 interface AuthContextType {
   user: User | null;
   organization: Organization | null;
+  token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
   login: (input: LoginInput) => Promise<void>;
-  register: (input: RegisterInput) => Promise<void>;
-  logout: () => Promise<void>;
+  signup: (input: SignupInput) => Promise<void>;
+  logout: () => void;
   clearError: () => void;
 }
 
@@ -21,30 +22,39 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const clearError = () => setError(null);
 
   const initAuth = useCallback(async () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('stockflow_access_token') : null;
-    if (!token) {
+    const storedToken = typeof window !== 'undefined' ? localStorage.getItem('stockflow_token') : null;
+    if (!storedToken) {
       setIsLoading(false);
       return;
     }
 
+    setToken(storedToken);
+
     try {
       const response = await api.auth.getMe();
       if (response.data) {
-        setUser(response.data.user);
+        setUser({
+          id: response.data.id,
+          organizationId: response.data.organizationId,
+          name: response.data.name,
+          email: response.data.email,
+          createdAt: new Date().toISOString(),
+        });
         setOrganization(response.data.organization);
       }
     } catch {
-      // Token expired or invalid
+      // Invalid or expired token
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('stockflow_access_token');
-        localStorage.removeItem('stockflow_refresh_token');
+        localStorage.removeItem('stockflow_token');
       }
+      setToken(null);
       setUser(null);
       setOrganization(null);
     } finally {
@@ -62,13 +72,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await api.auth.login(input);
       if (response.data) {
-        localStorage.setItem('stockflow_access_token', response.data.tokens.accessToken);
-        localStorage.setItem('stockflow_refresh_token', response.data.tokens.refreshToken);
+        localStorage.setItem('stockflow_token', response.data.token);
+        setToken(response.data.token);
         setUser(response.data.user);
         setOrganization(response.data.organization);
       }
     } catch (err) {
-      const msg = err instanceof ApiClientError ? err.message : 'Login failed';
+      const msg = err instanceof ApiClientError ? err.message : 'Invalid email or password';
       setError(msg);
       throw err;
     } finally {
@@ -76,14 +86,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (input: RegisterInput) => {
+  const signup = async (input: SignupInput) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.auth.register(input);
+      const response = await api.auth.signup(input);
       if (response.data) {
-        localStorage.setItem('stockflow_access_token', response.data.tokens.accessToken);
-        localStorage.setItem('stockflow_refresh_token', response.data.tokens.refreshToken);
+        localStorage.setItem('stockflow_token', response.data.token);
+        setToken(response.data.token);
         setUser(response.data.user);
         setOrganization(response.data.organization);
       }
@@ -96,20 +106,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = async () => {
-    const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('stockflow_refresh_token') || undefined : undefined;
-    try {
-      await api.auth.logout(refreshToken);
-    } catch {
-      // Ignore network errors on logout
-    } finally {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('stockflow_access_token');
-        localStorage.removeItem('stockflow_refresh_token');
-      }
-      setUser(null);
-      setOrganization(null);
+  const logout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('stockflow_token');
     }
+    setToken(null);
+    setUser(null);
+    setOrganization(null);
   };
 
   return (
@@ -117,11 +120,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         organization,
+        token,
         isAuthenticated: !!user,
         isLoading,
         error,
         login,
-        register,
+        signup,
         logout,
         clearError,
       }}
@@ -138,4 +142,3 @@ export function useAuth() {
   }
   return context;
 }
-

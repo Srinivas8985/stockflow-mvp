@@ -18,10 +18,8 @@ const envSchema = z.object({
     .default('postgresql://postgres:postgres@localhost:5432/stockflow_dev?schema=public'),
   CORS_ORIGIN: z.string().default('http://localhost:3000'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
-  JWT_ACCESS_SECRET: z.string().default('stockflow_access_jwt_super_secret_key_2026'),
-  JWT_REFRESH_SECRET: z.string().default('stockflow_refresh_jwt_super_secret_key_2026'),
-  JWT_ACCESS_EXPIRES_MINUTES: z.coerce.number().default(15),
-  JWT_REFRESH_EXPIRES_DAYS: z.coerce.number().default(7),
+  JWT_SECRET: z.string().min(16, 'JWT_SECRET must be at least 16 characters').default('stockflow_super_secret_jwt_key_2026_production_ready'),
+  JWT_EXPIRES_IN: z.string().default('24h'),
 });
 
 const parseEnv = () => {

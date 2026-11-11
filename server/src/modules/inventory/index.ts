@@ -1,7 +1,4 @@
-// Inventory Module - To be implemented in Phase 3
-// Scope: Products, stock tracking, warehouses, batches, suppliers
-export const inventoryModule = {
-  name: 'inventory',
-  status: 'planned',
-};
-
+export * from './inventory.schema';
+export * from './inventory.service';
+export * from './inventory.controller';
+export { default as inventoryRoutes } from './inventory.routes';

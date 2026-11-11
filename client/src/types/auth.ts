@@ -1,46 +1,32 @@
-export type OrganizationRole = 'OWNER' | 'ADMIN' | 'MANAGER' | 'MEMBER';
-export type OrganizationPlan = 'FREE' | 'STARTER' | 'PRO' | 'ENTERPRISE';
-
 export interface User {
   id: string;
+  organizationId: string;
+  name: string;
   email: string;
-  firstName: string;
-  lastName: string;
-  role: OrganizationRole;
+  createdAt: string;
 }
 
 export interface Organization {
   id: string;
   name: string;
-  slug: string;
-  plan: OrganizationPlan;
-  status: string;
-  memberCount?: number;
-}
-
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export interface AuthResponseData {
   user: User;
   organization: Organization;
-  tokens: AuthTokens;
+  token: string;
 }
 
-export interface RegisterInput {
-  organizationName: string;
-  organizationSlug?: string;
+export interface SignupInput {
+  name: string;
   email: string;
   password: string;
-  firstName: string;
-  lastName: string;
+  organizationName: string;
 }
 
 export interface LoginInput {
   email: string;
   password: string;
-  organizationSlug?: string;
 }
-
