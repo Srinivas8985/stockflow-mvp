@@ -23,21 +23,20 @@ RUN npm ci --workspace=client
 # ------------------------------------------------------------------------------
 # Stage 2: Build Application
 # ------------------------------------------------------------------------------
-FROM base AS builder
+FROM deps AS builder
 WORKDIR /app
 
-# Copy installed node_modules from deps stage
-COPY --from=deps /app/node_modules ./node_modules
-COPY package.json package-lock.json ./
+# Copy client source code (leaves installed node_modules intact)
 COPY client ./client
 
-WORKDIR /app/client
-
-# Build-time environment variables
+# Build-time environment variables and binary search path
+ENV PATH="/app/client/node_modules/.bin:/app/node_modules/.bin:$PATH"
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 ARG NEXT_PUBLIC_API_URL=/api/v1
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+
+WORKDIR /app/client
 
 # Compile Next.js production standalone bundle
 RUN npm run build
@@ -62,6 +61,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/client/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/client/public ./client/public
 COPY --from=builder --chown=nextjs:nodejs /app/client/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/client/.next/static ./client/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/client/.next/static ./.next/static
 
 # Switch to non-root user
 USER nextjs

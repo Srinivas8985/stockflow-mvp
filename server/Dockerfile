@@ -23,13 +23,13 @@ RUN npm ci --workspace=server
 # ------------------------------------------------------------------------------
 # Stage 2: Generate Prisma Client & Compile TypeScript
 # ------------------------------------------------------------------------------
-FROM base AS builder
+FROM deps AS builder
 WORKDIR /app
 
-# Copy installed node_modules
-COPY --from=deps /app/node_modules ./node_modules
-COPY package.json package-lock.json ./
+# Copy server source code (leaves installed node_modules intact)
 COPY server ./server
+
+ENV PATH="/app/server/node_modules/.bin:/app/node_modules/.bin:$PATH"
 
 WORKDIR /app/server
 
@@ -47,7 +47,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=5000
-ENV PATH="/app/node_modules/.bin:$PATH"
+ENV PATH="/app/server/node_modules/.bin:/app/node_modules/.bin:$PATH"
 
 # Security: Create non-root system user and group
 RUN addgroup --system --gid 1001 appgroup && \
