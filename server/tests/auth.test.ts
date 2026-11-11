@@ -1,8 +1,10 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { Server } from 'http';
+import jwt from 'jsonwebtoken';
 import { app } from '../src/app';
 import { prisma } from '../src/config/database';
+import { env } from '../src/config/env';
 
 describe('Phase 2: Authentication & Multi-Tenant Isolation', () => {
   let server: Server;
@@ -206,6 +208,28 @@ describe('Phase 2: Authentication & Multi-Tenant Isolation', () => {
 
       const body = await res.json();
       assert.equal(body.success, false);
+      assert.match(body.message, /invalid|malformed/i);
+    });
+
+    it('should reject requests with expired token (401 Unauthorized)', async () => {
+      const expiredToken = jwt.sign(
+        {
+          userId: orgIdA,
+          organizationId: orgIdA,
+          email: testUserA.email,
+        },
+        env.JWT_SECRET,
+        { expiresIn: -10 } // Expired 10 seconds ago
+      );
+
+      const res = await fetch(`${baseUrl}/auth/me`, {
+        headers: { Authorization: `Bearer ${expiredToken}` },
+      });
+      assert.equal(res.status, 401);
+
+      const body = await res.json();
+      assert.equal(body.success, false);
+      assert.match(body.message, /expired/i);
     });
 
     it('should return safe user profile and organization with a valid token', async () => {
@@ -219,6 +243,22 @@ describe('Phase 2: Authentication & Multi-Tenant Isolation', () => {
       assert.equal(body.data.email, testUserA.email.toLowerCase());
       assert.equal(body.data.organization.id, orgIdA);
       assert.equal(body.data.passwordHash, undefined, 'passwordHash must never be exposed');
+    });
+
+    it('should successfully logout and clear authentication cookie', async () => {
+      const res = await fetch(`${baseUrl}/auth/logout`, {
+        method: 'POST',
+      });
+
+      assert.equal(res.status, 200);
+      const body = await res.json();
+      assert.equal(body.success, true);
+      assert.equal(body.data.loggedOut, true);
+
+      // Verify Set-Cookie header clears the token
+      const setCookie = res.headers.get('set-cookie');
+      assert.ok(setCookie, 'Should send Set-Cookie header');
+      assert.match(setCookie, /token=;/i);
     });
   });
 

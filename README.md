@@ -692,3 +692,245 @@ StockFlow provides a modern B2B SaaS web interface built with Next.js 14 App Rou
    - Route highlight indication (`/dashboard`, `/products`, `/settings`).
    - Session guard that routes unauthenticated users directly to `/login`.
    - User profile badge and sign-out button.
+
+---
+
+## 14. Phase 6: Comprehensive Testing & Security Hardening
+
+### 1. Testing Framework & Tooling
+
+- **Test Runner**: Node.js built-in native test runner (`node:test`) paired with strict assertion module (`node:assert/strict`), executed directly through `tsx`.
+- **Network Testing**: Native standard `fetch` API against ephemeral test server bindings on random open ports (`server.listen(0)`), ensuring isolated test instances without port contention.
+- **Database Isolation**: Ephemeral test tenant organizations created per suite and cleaned up on teardown (`after` hook).
+
+### 2. Test Suites
+
+- **Backend Suites (`server/tests/`)**:
+  - `auth.test.ts`: Signup, duplicate email rejection, bcrypt verification, generic credential failure, missing/malformed/expired JWT handling, protected profile access, and multi-tenant user isolation.
+  - `inventory.test.ts`: CRUD lifecycle, duplicate SKU rejection within organization, SKU sharing across distinct organizations, pagination, name/SKU substring search, low-stock filtering, negative price/quantity rejection, cross-tenant modification prevention, and concurrent quantity updates with database persistence.
+  - `analytics-settings.test.ts`: Empty-inventory metric baselines, total products and total quantity sums, effective threshold resolution (product-specific vs. organization default), organization threshold modification via PATCH, Zod schema validation (integer, non-negative), and tenant metric isolation.
+  - `health.test.ts`: Health check contract and database connectivity verification.
+
+- **Frontend Suites (`client/tests/`)**:
+  - `auth-validation.test.ts`: Signup and login form validation rules (email regex, password length), route protection logic, and unauthenticated redirect behaviors.
+  - `inventory-logic.test.ts`: Single-unit stepper calculations (+1/-1), lower-bound clamp at zero, duplicate request locking, product form validation, URL query string building, and deletion confirmation safeguards.
+  - `dashboard-settings.test.ts`: Stock status classification (out-of-stock, low-stock, in-stock), threshold resolution precedence, KPI aggregation calculations, and organization setting form validation.
+
+### 3. Security Hardening Measures
+
+1. **Password Hashing**: `bcryptjs` with 10 salt rounds; plaintext passwords are never logged or stored.
+2. **Tenant Scoping**: All database queries strictly bind `organizationId` from authenticated JWT claims (`req.user.organizationId`). Client-supplied tenant IDs in headers or request bodies are ignored.
+3. **Input Sanitization**: Strict Zod schemas with `.strict()` parsing on updates, disallowing unauthorized fields.
+4. **SQL Injection Defense**: 100% parameterized Prisma queries with no raw SQL execution.
+5. **Git Hygiene & Secret Protection**: Normalized `.gitignore` (resolved legacy conflict markers) ensuring `.env`, credentials, and local keys are never committed.
+6. **Production Error Masking**: Unhandled exceptions are logged internally with stack traces but masked as generic `Internal server error` in production environments.
+7. **Enumeration Protection**: Generic `Invalid email or password` responses on failed logins prevent user account enumeration.
+
+### 4. Running the Test Suite
+
+```powershell
+# Run full test suite across both workspaces
+npm run test
+
+# Run backend integration tests only
+npm run test --workspace=server
+
+# Run frontend logic tests only
+npm run test --workspace=client
+
+# Verify TypeScript strict type-checking
+npm run typecheck
+
+# Run ESLint linting
+npm run lint
+
+# Production build check
+npm run build
+```
+
+---
+
+## 15. Phase 7: Production Docker Deployment on AWS EC2
+
+StockFlow is packaged into containerized multi-stage micro-services orchestrated via Docker Compose and secured behind a Caddy reverse proxy with automated Let's Encrypt SSL/TLS certificates directly on your EC2 Public IPv4 address (no custom domain required).
+
+```
+ Internet (HTTPS 443 / HTTP 80)
+            │
+            ▼
+┌────────────────────────────────────────────────────────┐
+│ Caddy Reverse Proxy (Let's Encrypt Public IP TLS)     │
+│   ├── /api/*   ──► Backend Container (Port 5000)      │
+│   └── /*       ──► Frontend Container (Port 3000)     │
+└────────────────────────────────────────────────────────┘
+            │               │
+            ▼               ▼
+┌───────────────────────┐ ┌──────────────────────────────┐
+│ Express API Backend   │ │ Next.js Frontend (Standalone)│
+│ (Port 5000 - Internal)│ │ (Port 3000 - Internal)       │
+└───────────────────────┘ └──────────────────────────────┘
+            │
+            ▼
+┌────────────────────────────────────────────────────────┐
+│ PostgreSQL 16 Database                                 │
+│ (Port 5432 - Internal, Named Volume: stockflow_pgdata) │
+└────────────────────────────────────────────────────────┘
+```
+
+### 1. Resource Constraints & Docker Hub Workflow
+
+The production EC2 instance has limited resources (~2 GB RAM, 2 vCPUs). Compiling TypeScript and bundling Next.js on an instance with 2 GB RAM can trigger Out-Of-Memory (OOM) process termination.
+
+**Recommended Production Workflow**:
+1. Build and tag frontend and backend Docker images locally on your development machine.
+2. Push images to your Docker Hub repository.
+3. On EC2, simply pull the prebuilt images and launch via Docker Compose.
+
+### 2. Local Machine: Build & Push Images to Docker Hub
+
+Run from the project root on your local machine:
+
+```powershell
+# Set your Docker Hub username and release version
+$DOCKER_USER = "yourdockerhubusername"
+$VERSION = "1.0.0"
+
+# 1. Log in to Docker Hub
+docker login
+
+# 2. Build the backend image (multi-stage production build with Prisma)
+docker build -f server/Dockerfile -t ${DOCKER_USER}/stockflow-backend:${VERSION} -t ${DOCKER_USER}/stockflow-backend:latest .
+
+# 3. Build the frontend image (Next.js standalone build with relative API routing)
+docker build -f client/Dockerfile -t ${DOCKER_USER}/stockflow-frontend:${VERSION} -t ${DOCKER_USER}/stockflow-frontend:latest .
+
+# 4. Push images to Docker Hub
+docker push ${DOCKER_USER}/stockflow-backend:${VERSION}
+docker push ${DOCKER_USER}/stockflow-backend:latest
+docker push ${DOCKER_USER}/stockflow-frontend:${VERSION}
+docker push ${DOCKER_USER}/stockflow-frontend:latest
+```
+
+### 3. AWS EC2 Setup & Security Group Configuration
+
+- **Instance Sizing**: AWS EC2 `t3.small` (2 vCPU, 2 GB RAM, 29 GB gp3 SSD).
+- **Public IPv4**: Assign or associate an Elastic IP (e.g. `203.0.113.195`).
+
+#### Inbound Security Group Firewall Rules:
+
+| Type | Protocol | Port Range | Source | Purpose |
+|---|---|---|---|---|
+| **SSH** | TCP | 22 | `Your-Admin-IP/32` | Secure administrative shell access |
+| **HTTP** | TCP | 80 | `0.0.0.0/0`, `::/0` | Let's Encrypt ACME HTTP-01 challenge & HTTP to HTTPS redirect |
+| **HTTPS** | TCP | 443 | `0.0.0.0/0`, `::/0` | Production encrypted application traffic |
+| **Custom UDP** | UDP | 443 | `0.0.0.0/0`, `::/0` | HTTP/3 (QUIC) fast path |
+
+> [!CAUTION]
+> Never open ports `5432` (PostgreSQL), `5000` (Backend API), or `3000` (Frontend) in your AWS Security Group. All internal application communication takes place across the private Docker bridge network (`stockflow_net`).
+
+### 4. Public IP HTTPS via Let's Encrypt (`profile shortlived`)
+
+Let's Encrypt officially supports issuing publicly trusted TLS certificates directly for public IPv4 addresses using the `shortlived` profile (~6-day lifetime). Caddy automatically provisions and continuously renews these certificates in the background through the configuration in `Caddyfile`:
+
+```caddy
+{$SERVER_IP} {
+    tls {
+        issuer acme {
+            dir https://acme-v02.api.letsencrypt.org/directory
+            profile shortlived
+        }
+    }
+    ...
+```
+
+### 5. EC2 Server Deployment Instructions
+
+SSH into your EC2 instance and execute:
+
+#### Step A: Install Docker & Docker Compose Plugin on EC2
+
+```bash
+sudo apt-get update && sudo apt-get install -y ca-certificates curl gnupg git
+
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+#### Step B: Clone Repository & Configure Environment
+
+```bash
+git clone <YOUR_REPOSITORY_URL> StockFlow
+cd StockFlow
+
+# Create and configure the production environment file
+cp .env.production.example .env.production
+nano .env.production
+```
+
+Configure your `.env.production`:
+
+```ini
+SERVER_IP=YOUR_EC2_PUBLIC_IPV4_ADDRESS
+ACME_EMAIL=admin@example.com
+FRONTEND_IMAGE=yourdockerhubusername/stockflow-frontend:1.0.0
+BACKEND_IMAGE=yourdockerhubusername/stockflow-backend:1.0.0
+POSTGRES_USER=stockflow
+POSTGRES_PASSWORD=your_strong_random_db_password_here
+POSTGRES_DB=stockflow_prod
+JWT_SECRET=your_32_char_cryptographic_jwt_secret_here
+JWT_EXPIRES_IN=24h
+NODE_ENV=production
+LOG_LEVEL=info
+NEXT_PUBLIC_API_URL=/api/v1
+```
+
+#### Step C: Pull Prebuilt Images & Launch the Container Stack
+
+```bash
+# Pull the prebuilt images from Docker Hub (avoids 2GB RAM build limits)
+docker compose -f docker-compose.prod.yml --env-file .env.production pull
+
+# Start all containers in detached mode
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d
+
+# Verify container statuses and health checks
+docker compose -f docker-compose.prod.yml ps
+```
+
+The backend container automatically executes `npx prisma migrate deploy` on startup before accepting traffic.
+
+#### Step D: Verify Deployment & Live Health
+
+```bash
+# Test health endpoint over HTTPS on your public IP
+curl -ik https://YOUR_EC2_PUBLIC_IPV4_ADDRESS/api/v1/health
+
+# View live container logs
+docker compose -f docker-compose.prod.yml logs -f
+```
+
+### 6. Backup & Recovery Operations
+
+#### Creating a Database Backup
+
+```bash
+# Create an instantaneous SQL dump without stopping containers
+docker compose -f docker-compose.prod.yml exec -T db pg_dump -U stockflow stockflow_prod > stockflow_backup_$(date +%Y%m%d_%H%M%S).sql
+```
+
+#### Restoring a Database Backup
+
+```bash
+# Restore an SQL dump into the production database
+cat backup_file.sql | docker compose -f docker-compose.prod.yml exec -T db psql -U stockflow -d stockflow_prod
+```

@@ -11,16 +11,20 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: 'bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 disabled:bg-emerald-300 shadow-sm',
-  secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 active:bg-gray-300 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700',
-  outline: 'border border-gray-300 bg-transparent hover:bg-gray-50 active:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200',
-  ghost: 'bg-transparent hover:bg-gray-100 active:bg-gray-200 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200',
+  primary:
+    'bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 disabled:bg-emerald-300 dark:disabled:bg-emerald-950/60 shadow-xs border border-transparent',
+  secondary:
+    'bg-slate-100 text-slate-900 hover:bg-slate-200 active:bg-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 border border-transparent',
+  outline:
+    'border border-slate-300/80 bg-white hover:bg-slate-50 active:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-xs',
+  ghost:
+    'bg-transparent hover:bg-slate-100 active:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: 'px-3 py-1.5 text-xs',
-  md: 'px-4 py-2 text-sm',
-  lg: 'px-6 py-3 text-base',
+  sm: 'px-2.5 py-1.5 text-xs h-7 min-w-[1.75rem]',
+  md: 'px-3.5 py-2 text-sm h-9',
+  lg: 'px-5 py-2.5 text-sm h-10',
 };
 
 export function Button({
@@ -35,7 +39,7 @@ export function Button({
   return (
     <button
       className={clsx(
-        'inline-flex items-center justify-center font-medium transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed',
+        'inline-flex items-center justify-center font-medium transition-colors duration-150 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:ring-offset-1 disabled:cursor-not-allowed select-none',
         variantStyles[variant],
         sizeStyles[size],
         className
@@ -44,8 +48,8 @@ export function Button({
       {...props}
     >
       {isLoading ? (
-        <span className="inline-flex items-center gap-2">
-          <svg className="h-4 w-4 animate-spin text-current" viewBox="0 0 24 24" fill="none">
+        <span className="inline-flex items-center gap-1.5">
+          <svg className="h-3.5 w-3.5 animate-spin text-current" viewBox="0 0 24 24" fill="none">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path
               className="opacity-75"
@@ -61,4 +65,3 @@ export function Button({
     </button>
   );
 }
-

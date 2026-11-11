@@ -30,14 +30,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const initAuth = useCallback(async () => {
     const storedToken = typeof window !== 'undefined' ? localStorage.getItem('stockflow_token') : null;
-    if (!storedToken) {
-      setIsLoading(false);
-      return;
+    if (storedToken) {
+      setToken(storedToken);
     }
 
-    setToken(storedToken);
-
     try {
+      // Authenticate via stored JWT or active HttpOnly secure cookie
       const response = await api.auth.getMe();
       if (response.data) {
         setUser({
@@ -50,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setOrganization(response.data.organization);
       }
     } catch {
-      // Invalid or expired token
+      // Invalid or expired token/cookie
       if (typeof window !== 'undefined') {
         localStorage.removeItem('stockflow_token');
       }
@@ -106,13 +104,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('stockflow_token');
+  const logout = async () => {
+    try {
+      await api.auth.logout();
+    } catch {
+      // Ignore network errors during logout
+    } finally {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('stockflow_token');
+      }
+      setToken(null);
+      setUser(null);
+      setOrganization(null);
     }
-    setToken(null);
-    setUser(null);
-    setOrganization(null);
   };
 
   return (

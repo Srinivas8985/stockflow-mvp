@@ -1,0 +1,56 @@
+# ==============================================================================
+# StockFlow - Production Caddy Reverse Proxy Configuration
+# ==============================================================================
+
+{
+    email {$ACME_EMAIL:admin@example.com}
+    admin off
+}
+
+# Serve directly on the EC2 Public IPv4 Address using Let's Encrypt shortlived profile
+{$SERVER_IP} {
+    tls {
+        issuer acme {
+            dir https://acme-v02.api.letsencrypt.org/directory
+            profile shortlived
+        }
+    }
+
+    encode gzip zstd
+
+    # Production Security Headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    # Route /api and /api/* to Express backend container
+    handle /api* {
+        reverse_proxy backend:5000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Route all other application traffic to Next.js frontend container
+    handle {
+        reverse_proxy frontend:3000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Structured logging
+    log {
+        output stdout
+        format console
+        level INFO
+    }
+}

@@ -16,6 +16,9 @@ import settingsRoutes from './modules/settings/settings.routes';
 export function createApp(): Application {
   const app: Application = express();
 
+  // Trust first proxy hop (Caddy reverse proxy) for accurate IP and protocol detection
+  app.set('trust proxy', 1);
+
   // Security Middleware
   app.use(helmet());
 
@@ -24,11 +27,11 @@ export function createApp(): Application {
   app.use(
     cors({
       origin: (origin, callback) => {
-        // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
+        // Allow requests with no origin (e.g. mobile apps, curl, same-origin, server-to-server)
         if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
           callback(null, true);
         } else {
-          callback(new Error(`CORS blocked for origin: ${origin}`));
+          callback(null, false);
         }
       },
       credentials: true,

@@ -22,4 +22,8 @@ router.get('/me', authenticate, (req, res, next) =>
   authController.getMe(req, res, next)
 );
 
+router.post('/logout', (req, res, next) =>
+  authController.logout(req, res, next)
+);
+
 export default router;

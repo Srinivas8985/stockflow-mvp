@@ -9,7 +9,7 @@ interface ProductFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (input: CreateProductInput | UpdateProductInput) => Promise<void>;
-  product?: Product | null; // If provided, edit mode; otherwise create mode
+  product?: Product | null;
 }
 
 export function ProductFormModal({
@@ -138,70 +138,70 @@ export function ProductFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-xs">
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-lg shadow-lg overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-slate-800">
           <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-              {isEditing ? 'Edit Product Details' : 'Add New Product'}
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+              {isEditing ? 'Edit product' : 'Add product'}
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-[11px] text-slate-500 mt-0.5">
               {isEditing
-                ? 'Update SKU, prices, and stock alert parameters'
-                : 'Register a new item in your organization catalog'}
+                ? 'Update SKU, prices, and replenishment thresholds'
+                : 'Register item in organization inventory'}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Content Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-5 space-y-3.5 overflow-y-auto">
           {validationError && (
-            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-xs flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 shrink-0" />
+            <div className="p-2.5 rounded border border-red-200 dark:border-red-900 bg-red-50/70 dark:bg-red-950/30 text-red-700 dark:text-red-300 text-xs flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
               <span>{validationError}</span>
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Product Name <span className="text-red-500">*</span>
+              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Product name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Industrial Barcode Scanner"
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="e.g. Barcode Scanner Pro"
+                className="w-full px-2.5 py-1.5 text-xs rounded border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                SKU (Stock Keeping Unit) <span className="text-red-500">*</span>
+              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                SKU <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 required
                 value={sku}
                 onChange={(e) => setSku(e.target.value.toUpperCase())}
-                placeholder="e.g. SCN-W100"
-                className="w-full px-3 py-2 text-sm font-mono uppercase rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="e.g. SCN-100"
+                className="w-full px-2.5 py-1.5 text-xs font-mono uppercase rounded border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
             </div>
 
             {!isEditing && (
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Initial Quantity <span className="text-red-500">*</span>
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Initial quantity <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
@@ -210,14 +210,14 @@ export function ProductFormModal({
                   required
                   value={quantity}
                   onChange={(e) => setQuantity(parseInt(e.target.value, 10) || 0)}
-                  className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-2.5 py-1.5 text-xs font-mono tabular-nums rounded border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Cost Price ($)
+              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Cost ($)
               </label>
               <input
                 type="number"
@@ -226,13 +226,13 @@ export function ProductFormModal({
                 value={costPrice}
                 onChange={(e) => setCostPrice(e.target.value)}
                 placeholder="0.00"
-                className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-2.5 py-1.5 text-xs font-mono tabular-nums rounded border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Selling Price ($)
+              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Selling price ($)
               </label>
               <input
                 type="number"
@@ -241,13 +241,13 @@ export function ProductFormModal({
                 value={sellingPrice}
                 onChange={(e) => setSellingPrice(e.target.value)}
                 placeholder="0.00"
-                className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-2.5 py-1.5 text-xs font-mono tabular-nums rounded border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
             </div>
 
             <div className={isEditing ? 'sm:col-span-2' : ''}>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Custom Low-Stock Threshold
+              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Custom low-stock threshold
               </label>
               <input
                 type="number"
@@ -256,12 +256,12 @@ export function ProductFormModal({
                 value={lowStockThreshold}
                 onChange={(e) => setLowStockThreshold(e.target.value)}
                 placeholder="Leave blank for org default"
-                className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-2.5 py-1.5 text-xs font-mono tabular-nums rounded border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Description
               </label>
               <textarea
@@ -269,13 +269,13 @@ export function ProductFormModal({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Optional notes or specifications..."
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                className="w-full px-2.5 py-1.5 text-xs rounded border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none"
               />
             </div>
           </div>
 
           {/* Footer buttons */}
-          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2">
             <Button
               type="button"
               variant="outline"
@@ -286,7 +286,7 @@ export function ProductFormModal({
               Cancel
             </Button>
             <Button type="submit" size="sm" isLoading={isSubmitting}>
-              {isEditing ? 'Save Changes' : 'Create Product'}
+              {isEditing ? 'Save changes' : 'Create product'}
             </Button>
           </div>
         </form>
@@ -294,4 +294,3 @@ export function ProductFormModal({
     </div>
   );
 }
-

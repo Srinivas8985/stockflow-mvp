@@ -15,8 +15,21 @@ import {
   UpdateSettingsInput,
 } from '@/types';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+function getApiBaseUrl(): string {
+  // On server (Node.js SSR): must use an absolute URL (internal container URL or dev localhost)
+  if (typeof window === 'undefined') {
+    return (
+      process.env.INTERNAL_API_URL ||
+      (process.env.NODE_ENV === 'production'
+        ? 'http://backend:5000/api/v1'
+        : 'http://localhost:5000/api/v1')
+    );
+  }
+  // In browser: use relative same-origin path routed through Caddy, or NEXT_PUBLIC_API_URL
+  return process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+}
+
+const API_BASE_URL = getApiBaseUrl();
 
 export class ApiClientError extends Error {
   public statusCode?: number;
@@ -47,6 +60,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   try {
     const response = await fetch(url, {
+      credentials: 'include',
       ...options,
       headers,
     });
@@ -96,6 +110,10 @@ export const api = {
         email: string;
         organization: Organization;
       }>('/auth/me'),
+    logout: () =>
+      request<{ loggedOut: boolean }>('/auth/logout', {
+        method: 'POST',
+      }),
   },
 
   organization: {

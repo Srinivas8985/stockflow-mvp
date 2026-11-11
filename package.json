@@ -19,10 +19,18 @@
     "docker:restart": "docker compose restart postgres",
     "db:migrate": "npm run prisma:migrate --workspace=server",
     "db:generate": "npm run prisma:generate --workspace=server",
-    "db:studio": "npm run prisma:studio --workspace=server"
+    "db:studio": "npm run prisma:studio --workspace=server",
+    "docker:build:frontend": "docker build -f client/Dockerfile -t stockflow-frontend:latest .",
+    "docker:build:backend": "docker build -f server/Dockerfile -t stockflow-backend:latest .",
+    "prod:pull": "docker compose -f docker-compose.prod.yml --env-file .env.production pull",
+    "prod:up": "docker compose -f docker-compose.prod.yml --env-file .env.production up -d",
+    "prod:down": "docker compose -f docker-compose.prod.yml down",
+    "prod:logs": "docker compose -f docker-compose.prod.yml logs -f",
+    "prod:migrate": "docker compose -f docker-compose.prod.yml exec backend npx prisma migrate deploy"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "^9.1.2",
+    "playwright": "^1.65.0"
   },
   "engines": {
     "node": ">=18.0.0",

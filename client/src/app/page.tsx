@@ -34,36 +34,36 @@ export default function HomePage() {
   return (
     <main className="min-h-screen p-6 md:p-12 lg:p-16 max-w-5xl mx-auto flex flex-col justify-center">
       {/* Top Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-200 dark:border-slate-800">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-200/80 dark:border-slate-800/80">
         <div>
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-bold shadow-md shadow-emerald-500/20">
+            <div className="h-8 w-8 rounded-md bg-emerald-600 flex items-center justify-center text-white font-semibold text-xs tracking-tight shadow-xs">
               SF
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
               StockFlow
             </h1>
-            <Badge variant="success">Phase 5 Complete</Badge>
+            <Badge variant="success">Operational</Badge>
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Multi-Tenant SaaS Inventory Management System
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {isAuthenticated ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <Link href="/dashboard">
-                <Button size="sm" className="flex items-center gap-1.5 text-xs font-semibold">
+                <Button size="sm" className="flex items-center gap-1.5 text-xs font-medium">
                   <LayoutDashboard className="h-3.5 w-3.5" />
                   Dashboard
                 </Button>
               </Link>
-              <div className="text-right hidden sm:block">
-                <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+              <div className="text-right hidden sm:block px-2">
+                <div className="text-xs font-medium text-slate-800 dark:text-slate-200">
                   {user?.name}
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
                   {organization?.name}
                 </div>
               </div>
@@ -71,7 +71,7 @@ export default function HomePage() {
                 variant="outline"
                 size="sm"
                 onClick={logout}
-                className="flex items-center gap-1.5 text-xs text-red-600 border-red-200 dark:border-red-900 hover:bg-red-50 dark:hover:bg-red-950/40"
+                className="flex items-center gap-1.5 text-xs text-rose-600 border-rose-200/80 dark:border-rose-900/60 hover:bg-rose-50 dark:hover:bg-rose-950/40"
               >
                 <LogOut className="h-3.5 w-3.5" />
                 Sign Out
@@ -109,24 +109,24 @@ export default function HomePage() {
 
       {/* Authenticated Tenant Context Card (Phase 2 Multi-Tenant Verification) */}
       {isAuthenticated && (
-        <Card className="mb-8 border-emerald-300 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20">
+        <Card className="mb-8 border-emerald-200/80 dark:border-emerald-900/50 bg-emerald-50/20 dark:bg-emerald-950/10">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Building className="h-5 w-5 text-emerald-600" />
-                <CardTitle className="text-emerald-900 dark:text-emerald-100">
+                <Building className="h-4 w-4 text-emerald-600" />
+                <CardTitle className="text-sm font-semibold text-emerald-950 dark:text-emerald-100">
                   Tenant Isolation Verified: {organization?.name}
                 </CardTitle>
               </div>
               <Badge variant="success">Authenticated</Badge>
             </div>
-            <CardDescription className="text-emerald-700 dark:text-emerald-300">
+            <CardDescription className="text-xs text-emerald-700/90 dark:text-emerald-300/80">
               Trusted session derived from validated JWT claims (Never client-supplied)
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
-              <div className="bg-white/80 dark:bg-slate-900/80 p-3 rounded-lg border border-emerald-200 dark:border-emerald-900">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+              <div className="bg-white dark:bg-slate-900 p-3 rounded-md border border-slate-200/80 dark:border-slate-800/80">
                 <div className="text-slate-500 mb-1 flex items-center gap-1">
                   <User className="h-3.5 w-3.5" /> Authenticated User
                 </div>
@@ -134,7 +134,7 @@ export default function HomePage() {
                 <div className="text-slate-500">{user?.email}</div>
                 <div className="text-[10px] text-slate-400 mt-1 truncate">ID: {user?.id}</div>
               </div>
-              <div className="bg-white/80 dark:bg-slate-900/80 p-3 rounded-lg border border-emerald-200 dark:border-emerald-900">
+              <div className="bg-white dark:bg-slate-900 p-3 rounded-md border border-slate-200/80 dark:border-slate-800/80">
                 <div className="text-slate-500 mb-1 flex items-center gap-1">
                   <Building className="h-3.5 w-3.5" /> Organization (Tenant Context)
                 </div>
@@ -147,28 +147,28 @@ export default function HomePage() {
       )}
 
       {/* Status Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
         {/* Frontend Card */}
-        <Card className="border-slate-200 dark:border-slate-800">
+        <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <span className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600">
-                <Layers className="h-5 w-5" />
+              <span className="h-7 w-7 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center border border-slate-200/60 dark:border-slate-700/60">
+                <Layers className="h-4 w-4" />
               </span>
               <Badge variant="success">Running</Badge>
             </div>
-            <CardTitle className="mt-3">Frontend Client</CardTitle>
-            <CardDescription>Next.js 14 App Router + Tailwind</CardDescription>
+            <CardTitle className="mt-3 text-sm font-semibold">Frontend Client</CardTitle>
+            <CardDescription className="text-xs">Next.js 14 App Router + Tailwind</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-xs space-y-1 text-slate-500 dark:text-slate-400">
+            <div className="text-xs space-y-1.5 text-slate-500 dark:text-slate-400">
               <div className="flex justify-between">
                 <span>Port:</span>
-                <span className="font-mono text-slate-700 dark:text-slate-200">3000</span>
+                <span className="font-mono tabular-nums text-slate-700 dark:text-slate-200">3000</span>
               </div>
               <div className="flex justify-between">
                 <span>TypeScript:</span>
-                <span className="font-mono text-emerald-600">Strict Mode</span>
+                <span className="font-mono text-emerald-600 dark:text-emerald-400">Strict Mode</span>
               </div>
               <div className="flex justify-between">
                 <span>Auth Flow:</span>
@@ -181,11 +181,11 @@ export default function HomePage() {
         </Card>
 
         {/* Backend API Card */}
-        <Card className="border-slate-200 dark:border-slate-800">
+        <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <span className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600">
-                <Server className="h-5 w-5" />
+              <span className="h-7 w-7 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center border border-slate-200/60 dark:border-slate-700/60">
+                <Server className="h-4 w-4" />
               </span>
               {isLoading ? (
                 <Badge variant="warning">Checking...</Badge>
@@ -195,22 +195,22 @@ export default function HomePage() {
                 <Badge variant="danger">Degraded</Badge>
               )}
             </div>
-            <CardTitle className="mt-3">Backend API</CardTitle>
-            <CardDescription>Express.js + JWT + bcrypt</CardDescription>
+            <CardTitle className="mt-3 text-sm font-semibold">Backend API</CardTitle>
+            <CardDescription className="text-xs">Express.js + JWT + bcrypt</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-xs space-y-1 text-slate-500 dark:text-slate-400">
+            <div className="text-xs space-y-1.5 text-slate-500 dark:text-slate-400">
               <div className="flex justify-between">
                 <span>Port:</span>
-                <span className="font-mono text-slate-700 dark:text-slate-200">5000</span>
+                <span className="font-mono tabular-nums text-slate-700 dark:text-slate-200">5000</span>
               </div>
               <div className="flex justify-between">
                 <span>Auth Endpoints:</span>
-                <span className="font-mono text-blue-600">/auth/signup, /login</span>
+                <span className="font-mono text-slate-700 dark:text-slate-300">/auth/signup, /login</span>
               </div>
               <div className="flex justify-between">
                 <span>Uptime:</span>
-                <span className="font-mono text-slate-700 dark:text-slate-200">
+                <span className="font-mono tabular-nums text-slate-700 dark:text-slate-200">
                   {health ? `${Math.floor(health.uptime)}s` : '—'}
                 </span>
               </div>
@@ -219,11 +219,11 @@ export default function HomePage() {
         </Card>
 
         {/* Database Card */}
-        <Card className="border-slate-200 dark:border-slate-800">
+        <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <span className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950/40 text-purple-600">
-                <Database className="h-5 w-5" />
+              <span className="h-7 w-7 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center border border-slate-200/60 dark:border-slate-700/60">
+                <Database className="h-4 w-4" />
               </span>
               {isLoading ? (
                 <Badge variant="warning">Checking...</Badge>
@@ -233,22 +233,22 @@ export default function HomePage() {
                 <Badge variant="danger">Disconnected</Badge>
               )}
             </div>
-            <CardTitle className="mt-3">PostgreSQL</CardTitle>
-            <CardDescription>Docker Compose + Prisma ORM</CardDescription>
+            <CardTitle className="mt-3 text-sm font-semibold">PostgreSQL</CardTitle>
+            <CardDescription className="text-xs">Docker Compose + Prisma ORM</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-xs space-y-1 text-slate-500 dark:text-slate-400">
+            <div className="text-xs space-y-1.5 text-slate-500 dark:text-slate-400">
               <div className="flex justify-between">
                 <span>Host / Port:</span>
-                <span className="font-mono text-slate-700 dark:text-slate-200">localhost:5432</span>
+                <span className="font-mono tabular-nums text-slate-700 dark:text-slate-200">localhost:5432</span>
               </div>
               <div className="flex justify-between">
                 <span>Multi-Tenancy:</span>
-                <span className="font-mono text-purple-600">Organization Scope</span>
+                <span className="font-mono text-slate-700 dark:text-slate-300">Organization Scope</span>
               </div>
               <div className="flex justify-between">
                 <span>Latency:</span>
-                <span className="font-mono text-slate-700 dark:text-slate-200">
+                <span className="font-mono tabular-nums text-slate-700 dark:text-slate-200">
                   {health?.services.database.latencyMs !== undefined
                     ? `${health.services.database.latencyMs}ms`
                     : '—'}
@@ -297,35 +297,35 @@ export default function HomePage() {
         </CardContent>
       </Card>
 
-      {/* Modular Architecture Plan Checklist */}
-      <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-6 bg-slate-100/50 dark:bg-slate-900/50">
-        <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
-          Phase 2 Deliverables Checklist
+      {/* Architecture Plan Checklist */}
+      <div className="rounded-lg border border-slate-200/80 dark:border-slate-800/80 p-5 bg-white dark:bg-slate-900">
+        <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3">
+          Architecture Verification & Tenancy Safeguards
         </h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
-          <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-            <span>Organization & User Schema</span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 text-xs">
+          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+            <span>Organization & user schema</span>
           </div>
-          <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-            <span>Atomic Registration Transaction</span>
+          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+            <span>Atomic registration transaction</span>
           </div>
-          <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-            <span>Secure bcrypt Password Hashing</span>
+          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+            <span>Secure bcrypt password hashing</span>
           </div>
-          <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-            <span>JWT Signing & Verification</span>
+          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+            <span>JWT signing & verification</span>
           </div>
-          <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-            <span>Tenant Isolation Middleware</span>
+          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+            <span>Strict tenant isolation middleware</span>
           </div>
-          <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-            <span>Zero Exposure of passwordHash</span>
+          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+            <span>Zero exposure of passwordHash</span>
           </div>
         </div>
       </div>

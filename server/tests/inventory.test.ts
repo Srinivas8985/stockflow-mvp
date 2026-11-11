@@ -176,6 +176,28 @@ describe('Phase 3: Inventory Management - Product CRUD & Tenant Isolation', () =
       assert.equal(body.data.sku, sharedSku);
     });
 
+    it('should reject negative quantity and prices (400 Bad Request)', async () => {
+      const res = await fetch(`${baseUrl}/products`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${tokenA}`,
+        },
+        body: JSON.stringify({
+          name: 'Invalid Negative Item',
+          sku: `NEG-${timestamp}`,
+          quantity: -10,
+          costPrice: -5.0,
+          sellingPrice: -15.0,
+        }),
+      });
+
+      const body = await res.json();
+      assert.equal(res.status, 400);
+      assert.equal(body.success, false);
+      assert.equal(body.error?.code, 'VALIDATION_ERROR');
+    });
+
     it('10. should reject unauthenticated access', async () => {
       const res = await fetch(`${baseUrl}/products`, {
         method: 'POST',
@@ -243,6 +265,30 @@ describe('Phase 3: Inventory Management - Product CRUD & Tenant Isolation', () =
       assert.equal(body.success, true);
       // Thermal printer has qty: 3, threshold: 10
       assert.ok(body.data.some((item: any) => item.name === 'Thermal Label Printer'));
+    });
+
+    it('should strictly isolate product listings (Org A cannot see Org B products)', async () => {
+      const resA = await fetch(`${baseUrl}/products`, {
+        headers: { Authorization: `Bearer ${tokenA}` },
+      });
+      const bodyA = await resA.json();
+      assert.equal(resA.status, 200);
+      assert.ok(bodyA.data.length > 0);
+      for (const item of bodyA.data) {
+        assert.equal(item.organizationId, orgIdA);
+        assert.notEqual(item.organizationId, orgIdB);
+      }
+
+      const resB = await fetch(`${baseUrl}/products`, {
+        headers: { Authorization: `Bearer ${tokenB}` },
+      });
+      const bodyB = await resB.json();
+      assert.equal(resB.status, 200);
+      assert.ok(bodyB.data.length > 0);
+      for (const item of bodyB.data) {
+        assert.equal(item.organizationId, orgIdB);
+        assert.notEqual(item.organizationId, orgIdA);
+      }
     });
   });
 
@@ -441,6 +487,33 @@ describe('Phase 3: Inventory Management - Product CRUD & Tenant Isolation', () =
         body: JSON.stringify({ quantity: 999 }),
       });
       assert.equal(res.status, 404);
+    });
+
+    it('should safely handle concurrent quantity updates and persist to database', async () => {
+      const targetQuantities = [10, 15, 20, 25, 30];
+      const responses = await Promise.all(
+        targetQuantities.map((qty) =>
+          fetch(`${baseUrl}/products/${createdProductA1Id}/quantity`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${tokenA}`,
+            },
+            body: JSON.stringify({ quantity: qty }),
+          })
+        )
+      );
+
+      for (const res of responses) {
+        assert.equal(res.status, 200);
+      }
+
+      const verifyRes = await fetch(`${baseUrl}/products/${createdProductA1Id}`, {
+        headers: { Authorization: `Bearer ${tokenA}` },
+      });
+      const verifyBody = await verifyRes.json();
+      assert.equal(verifyRes.status, 200);
+      assert.ok(targetQuantities.includes(verifyBody.data.quantity));
     });
   });
 

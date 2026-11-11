@@ -13,7 +13,6 @@ import {
   Package,
   Boxes,
   AlertTriangle,
-  ArrowRight,
   RefreshCw,
   Plus,
   AlertCircle,
@@ -59,151 +58,125 @@ export default function DashboardPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        {/* Top Header & Actions */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/80 dark:border-slate-800">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
               Inventory Dashboard
             </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Real-time stock valuation, inventory volume, and replenishment monitoring
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Stock levels, total volume, and replenishment monitoring
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={loadData}
               isLoading={isLoading}
-              className="flex items-center gap-1.5 text-xs"
+              className="flex items-center gap-1.5"
             >
               <RefreshCw className="h-3.5 w-3.5" />
-              Refresh
+              <span>Refresh</span>
             </Button>
             <Link href="/products">
-              <Button size="sm" className="flex items-center gap-1.5 text-xs font-semibold">
+              <Button size="sm" className="flex items-center gap-1.5">
                 <Plus className="h-3.5 w-3.5" />
-                Add Product
+                <span>Add product</span>
               </Button>
             </Link>
           </div>
         </div>
 
-        {/* Error Alert */}
+        {/* Error Notification */}
         {error && (
-          <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-sm flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 shrink-0" />
+          <div className="p-3.5 rounded border border-red-200 dark:border-red-900 bg-red-50/70 dark:bg-red-950/30 text-red-700 dark:text-red-300 text-xs flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
               <span>{error}</span>
             </div>
-            <Button variant="outline" size="sm" onClick={loadData} className="text-xs">
+            <Button variant="outline" size="sm" onClick={loadData}>
               Retry
             </Button>
           </div>
         )}
 
         {/* Metric Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* 1. Total Products */}
-          <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Total Catalog Items
-                </span>
-                <span className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
-                  <Package className="h-5 w-5" />
-                </span>
+          <Card>
+            <CardHeader className="pb-1">
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
+                <span>Total catalog products</span>
+                <Package className="h-4 w-4 text-slate-400" />
               </div>
-              <CardTitle className="text-3xl font-extrabold mt-1">
-                {isLoading ? (
-                  <span className="inline-block w-16 h-8 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
-                ) : (
-                  analytics?.totalProducts ?? 0
-                )}
+              <CardTitle className="text-2xl sm:text-3xl font-semibold tabular-nums mt-1 text-slate-900 dark:text-white">
+                {isLoading ? '—' : analytics?.totalProducts ?? 0}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                <span>Unique product records</span>
+              <div className="text-xs text-slate-500 flex items-center justify-between">
+                <span>Active SKU entries</span>
                 <Link
                   href="/products"
-                  className="text-emerald-600 dark:text-emerald-400 hover:underline font-medium flex items-center gap-1"
+                  className="text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
                 >
-                  Manage <ArrowRight className="h-3 w-3" />
+                  Manage items
                 </Link>
-              </p>
+              </div>
             </CardContent>
           </Card>
 
           {/* 2. Total Stock Units */}
-          <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Total Units On Hand
-                </span>
-                <span className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
-                  <Boxes className="h-5 w-5" />
-                </span>
+          <Card>
+            <CardHeader className="pb-1">
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
+                <span>Units on hand</span>
+                <Boxes className="h-4 w-4 text-slate-400" />
               </div>
-              <CardTitle className="text-3xl font-extrabold mt-1">
-                {isLoading ? (
-                  <span className="inline-block w-20 h-8 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
-                ) : (
-                  (analytics?.totalQuantity ?? 0).toLocaleString()
-                )}
+              <CardTitle className="text-2xl sm:text-3xl font-semibold tabular-nums mt-1 text-slate-900 dark:text-white">
+                {isLoading ? '—' : (analytics?.totalQuantity ?? 0).toLocaleString()}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Aggregated inventory count across warehouse
+                Sum of all stock quantities across warehouse
               </p>
             </CardContent>
           </Card>
 
           {/* 3. Low-Stock Alert Count */}
-          <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 sm:col-span-2 lg:col-span-1">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Low Stock Alerts
-                </span>
-                <span
-                  className={`p-2 rounded-lg ${
+          <Card className="sm:col-span-2 lg:col-span-1">
+            <CardHeader className="pb-1">
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
+                <span>Low-stock alerts</span>
+                <AlertTriangle
+                  className={
                     (analytics?.lowStockCount ?? 0) > 0
-                      ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400'
-                      : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400'
-                  }`}
-                >
-                  <AlertTriangle className="h-5 w-5" />
-                </span>
+                      ? 'h-4 w-4 text-amber-500'
+                      : 'h-4 w-4 text-slate-400'
+                  }
+                />
               </div>
-              <CardTitle className="text-3xl font-extrabold mt-1">
-                {isLoading ? (
-                  <span className="inline-block w-14 h-8 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
-                ) : (
-                  analytics?.lowStockCount ?? 0
-                )}
+              <CardTitle className="text-2xl sm:text-3xl font-semibold tabular-nums mt-1 text-slate-900 dark:text-white">
+                {isLoading ? '—' : analytics?.lowStockCount ?? 0}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500 dark:text-slate-400">
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <span>
                   {(analytics?.lowStockCount ?? 0) > 0 ? (
-                    <span className="text-amber-600 dark:text-amber-400 font-semibold">
-                      Restocking required
+                    <span className="text-amber-600 dark:text-amber-400 font-medium">
+                      Replenishment needed
                     </span>
                   ) : (
-                    <span className="text-emerald-600 dark:text-emerald-400">
-                      All thresholds satisfied
-                    </span>
+                    <span>All stock levels sufficient</span>
                   )}
                 </span>
                 <Link
                   href="/settings"
-                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 underline text-[11px]"
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 underline text-[11px]"
                 >
                   Threshold: {defaultThreshold}
                 </Link>
@@ -213,75 +186,69 @@ export default function DashboardPage() {
         </div>
 
         {/* Low Stock Replenishment Table */}
-        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-          <CardHeader>
+        <Card className="overflow-hidden">
+          <CardHeader className="border-b border-slate-100 dark:border-slate-800/80 pb-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <CardTitle className="text-lg font-bold flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-amber-500" />
-                  Critical & Low Stock Items
+                <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                  <span>Replenishment alerts</span>
+                  {(analytics?.lowStockCount ?? 0) > 0 && (
+                    <span className="font-mono text-xs px-1.5 py-0.2 rounded bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 font-medium">
+                      {analytics?.lowStockCount}
+                    </span>
+                  )}
                 </CardTitle>
-                <CardDescription className="text-xs mt-0.5">
-                  Products whose on-hand quantity is at or below their effective threshold
+                <CardDescription className="text-xs text-slate-500 mt-0.5">
+                  Products at or below their effective low-stock threshold
                 </CardDescription>
               </div>
               <Link href="/products">
-                <Button variant="outline" size="sm" className="text-xs flex items-center gap-1">
-                  View Full Inventory <ArrowRight className="h-3.5 w-3.5" />
+                <Button variant="outline" size="sm" className="text-xs">
+                  View full inventory
                 </Button>
               </Link>
             </div>
           </CardHeader>
 
-          <CardContent>
+          <CardContent className="p-0">
             {isLoading ? (
-              <div className="py-12 flex flex-col items-center justify-center gap-3 text-slate-400 text-sm">
-                <span className="h-6 w-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-                Loading inventory metrics...
+              <div className="py-12 flex items-center justify-center gap-2 text-slate-400 text-xs font-mono">
+                <span className="h-4 w-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                <span>Loading metrics...</span>
               </div>
             ) : analytics && analytics.totalProducts === 0 ? (
-              /* Zero Products Empty State */
-              <div className="py-12 text-center max-w-sm mx-auto">
-                <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3 text-slate-400">
-                  <Package className="h-6 w-6" />
-                </div>
-                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                  No products in catalog yet
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-4">
-                  Get started by adding products to your organization to track inventory and view metrics.
+              <div className="py-12 text-center max-w-sm mx-auto px-4">
+                <p className="text-sm font-medium text-slate-900 dark:text-white">
+                  No products in catalog
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-3">
+                  Add products to track on-hand stock and view automated threshold alerts.
                 </p>
                 <Link href="/products">
-                  <Button size="sm" className="inline-flex items-center gap-1.5 text-xs">
-                    <Plus className="h-3.5 w-3.5" /> Add Your First Product
-                  </Button>
+                  <Button size="sm">Add first product</Button>
                 </Link>
               </div>
             ) : analytics && analytics.lowStockProducts.length === 0 ? (
-              /* Healthy Stock Empty State */
-              <div className="py-10 text-center max-w-sm mx-auto">
-                <div className="h-12 w-12 rounded-full bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center mx-auto mb-3 text-emerald-600">
-                  <CheckCircle2 className="h-6 w-6" />
+              <div className="py-8 text-center max-w-sm mx-auto px-4">
+                <div className="flex items-center justify-center gap-2 text-emerald-600 dark:text-emerald-400 text-sm font-medium">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>All inventory levels healthy</span>
                 </div>
-                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                  All inventory levels healthy
-                </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  No items currently require restocking based on your organization and product thresholds.
+                  No items currently require restocking based on configured thresholds.
                 </p>
               </div>
             ) : (
-              /* Low Stock Data Table */
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
+                <table className="w-full text-left text-xs">
                   <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-800 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      <th className="py-3 px-3">Product Name</th>
-                      <th className="py-3 px-3">SKU</th>
-                      <th className="py-3 px-3 text-center">Stock Level</th>
-                      <th className="py-3 px-3 text-right">Threshold</th>
-                      <th className="py-3 px-3 text-center">Status</th>
-                      <th className="py-3 px-3 text-right">Action</th>
+                    <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 bg-slate-50/60 dark:bg-slate-850/40">
+                      <th className="py-2.5 px-4 font-medium">Product</th>
+                      <th className="py-2.5 px-3 font-medium">SKU</th>
+                      <th className="py-2.5 px-3 text-center font-medium">Stock level</th>
+                      <th className="py-2.5 px-3 text-right font-medium">Threshold</th>
+                      <th className="py-2.5 px-3 text-center font-medium">Status</th>
+                      <th className="py-2.5 px-4 text-right font-medium">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
@@ -295,55 +262,45 @@ export default function DashboardPage() {
                       return (
                         <tr
                           key={product.id}
-                          className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                          className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors duration-150"
                         >
-                          <td className="py-3 px-3">
-                            <div className="font-semibold text-slate-900 dark:text-slate-100">
+                          <td className="py-2.5 px-4">
+                            <span className="font-medium text-slate-900 dark:text-slate-100">
                               {product.name}
-                            </div>
-                            {product.description && (
-                              <div className="text-xs text-slate-400 truncate max-w-xs">
-                                {product.description}
-                              </div>
-                            )}
+                            </span>
                           </td>
-                          <td className="py-3 px-3 font-mono text-xs text-slate-600 dark:text-slate-300">
+                          <td className="py-2.5 px-3 font-mono text-[11px] text-slate-600 dark:text-slate-300">
                             {product.sku}
                           </td>
-                          <td className="py-3 px-3 text-center">
+                          <td className="py-2.5 px-3 text-center">
                             <div className="flex items-center justify-center">
                               <StockQuantityControl
                                 product={product}
                                 size="sm"
                                 onUpdateSuccess={async () => {
-                                  // Refresh dashboard analytics and low-stock information
                                   await loadData();
                                 }}
                                 onError={(errMsg) => setError(errMsg)}
                               />
                             </div>
                           </td>
-                          <td className="py-3 px-3 text-right font-mono text-xs text-slate-500">
+                          <td className="py-2.5 px-3 text-right font-mono tabular-nums text-slate-600 dark:text-slate-400">
                             {effectiveThreshold}
                             {product.lowStockThreshold !== null && (
                               <span className="text-[10px] text-slate-400 block">custom</span>
                             )}
                           </td>
-                          <td className="py-3 px-3 text-center">
+                          <td className="py-2.5 px-3 text-center">
                             {isOutOfStock ? (
-                              <Badge variant="danger">Out of Stock</Badge>
+                              <Badge variant="danger">Out of stock</Badge>
                             ) : (
-                              <Badge variant="warning">Low Stock</Badge>
+                              <Badge variant="warning">Low stock</Badge>
                             )}
                           </td>
-                          <td className="py-3 px-3 text-right">
+                          <td className="py-2.5 px-4 text-right">
                             <Link href="/products">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-xs px-2.5 py-1"
-                              >
-                                View
+                              <Button variant="outline" size="sm" className="px-2 py-0.5 text-xs">
+                                Edit
                               </Button>
                             </Link>
                           </td>
@@ -360,4 +317,3 @@ export default function DashboardPage() {
     </AppLayout>
   );
 }
-

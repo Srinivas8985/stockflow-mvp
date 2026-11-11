@@ -24,7 +24,6 @@ import {
   RefreshCw,
   Edit2,
   Trash2,
-  AlertTriangle,
   ChevronLeft,
   ChevronRight,
   Package,
@@ -55,7 +54,6 @@ export default function ProductsPage() {
   const [quantityModalProduct, setQuantityModalProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
 
-  // Toast notification auto-dismiss
   useEffect(() => {
     if (successToast) {
       const timer = setTimeout(() => setSuccessToast(null), 3500);
@@ -115,23 +113,23 @@ export default function ProductsPage() {
   const handleCreateOrUpdate = async (input: CreateProductInput | UpdateProductInput) => {
     if (editingProduct) {
       await api.products.update(editingProduct.id, input as UpdateProductInput);
-      setSuccessToast(`Product "${input.name || editingProduct.name}" updated successfully`);
+      setSuccessToast(`Product "${input.name || editingProduct.name}" updated`);
     } else {
       await api.products.create(input as CreateProductInput);
-      setSuccessToast(`Product "${input.name}" created successfully`);
+      setSuccessToast(`Product "${input.name}" created`);
     }
     await loadProducts(pagination.page);
   };
 
   const handleUpdateQuantity = async (productId: string, quantity: number) => {
     await api.products.updateQuantity(productId, quantity);
-    setSuccessToast('Stock quantity updated successfully');
+    setSuccessToast('Stock quantity updated');
     await loadProducts(pagination.page);
   };
 
   const handleDeleteProduct = async (productId: string) => {
     await api.products.delete(productId);
-    setSuccessToast('Product deleted from organization catalog');
+    setSuccessToast('Product removed from catalog');
     await loadProducts(1);
   };
 
@@ -139,15 +137,15 @@ export default function ProductsPage() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        {/* Page Top Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+      <div className="space-y-5">
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/80 dark:border-slate-800">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
               Inventory & Products
             </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Manage product catalog, real-time quantities, and unit pricing
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Manage product items, on-hand counts, and unit pricing
             </p>
           </div>
 
@@ -157,72 +155,73 @@ export default function ProductsPage() {
               setEditingProduct(null);
               setFormModalOpen(true);
             }}
-            className="flex items-center gap-1.5 text-xs font-semibold self-start sm:self-auto"
+            className="flex items-center gap-1.5 self-start sm:self-auto"
           >
-            <Plus className="h-4 w-4" /> Add Product
+            <Plus className="h-3.5 w-3.5" />
+            <span>Add product</span>
           </Button>
         </div>
 
-        {/* Success Toast */}
+        {/* Notifications */}
         {successToast && (
-          <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs font-medium flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="p-3 rounded border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 text-xs flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
               <span>{successToast}</span>
             </div>
             <button
               onClick={() => setSuccessToast(null)}
-              className="text-emerald-700 dark:text-emerald-300 hover:text-emerald-900 text-xs font-bold"
+              className="text-xs text-emerald-700 dark:text-emerald-300 font-medium hover:underline"
             >
               Dismiss
             </button>
           </div>
         )}
 
-        {/* Error Alert */}
         {error && (
-          <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-sm flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <AlertCircle className="h-5 w-5 shrink-0" />
+          <div className="p-3.5 rounded border border-red-200 dark:border-red-900 bg-red-50/70 dark:bg-red-950/30 text-red-700 dark:text-red-300 text-xs flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
               <span>{error}</span>
             </div>
             <Button
               variant="outline"
               size="sm"
               onClick={() => loadProducts(pagination.page)}
-              className="text-xs"
             >
               Retry
             </Button>
           </div>
         )}
 
-        {/* Controls Bar: Search & Filter */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-md">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-              <Search className="h-4 w-4" />
+        {/* Search & Filter Toolbar */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+          <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-sm">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400">
+              <Search className="h-3.5 w-3.5" />
             </span>
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by product name or SKU..."
-              className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              placeholder="Search product name or SKU..."
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded border border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             />
           </form>
 
           <div className="flex items-center gap-2">
-            <Button
+            <button
               type="button"
-              variant={lowStockFilter ? 'primary' : 'outline'}
-              size="sm"
               onClick={handleToggleLowStock}
-              className="flex items-center gap-1.5 text-xs"
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded border transition-colors ${
+                lowStockFilter
+                  ? 'border-emerald-600 bg-emerald-50/70 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 font-medium'
+                  : 'border-slate-300/80 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
+              }`}
             >
-              <Filter className="h-3.5 w-3.5" />
-              {lowStockFilter ? 'Showing Low Stock' : 'Filter Low Stock'}
-            </Button>
+              <Filter className="h-3 w-3" />
+              <span>Low-stock only</span>
+            </button>
 
             <Button
               type="button"
@@ -230,7 +229,7 @@ export default function ProductsPage() {
               size="sm"
               onClick={() => loadProducts(pagination.page)}
               isLoading={isLoading}
-              className="p-2"
+              className="px-2"
               title="Refresh inventory"
             >
               <RefreshCw className="h-3.5 w-3.5" />
@@ -239,36 +238,31 @@ export default function ProductsPage() {
         </div>
 
         {/* Products Table Card */}
-        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-          <CardHeader className="py-3.5 px-6 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between">
-            <CardTitle className="text-base font-bold flex items-center gap-2">
-              <Package className="h-4 w-4 text-emerald-600" />
-              Product Catalog ({pagination.total})
-            </CardTitle>
-            <span className="text-xs text-slate-400">
-              Page {pagination.page} of {pagination.totalPages}
+        <Card className="overflow-hidden p-0">
+          <div className="py-2.5 px-4 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+              Product catalog ({pagination.total})
             </span>
-          </CardHeader>
+            <span className="text-[11px] font-mono tabular-nums text-slate-400">
+              Page {pagination.page} / {pagination.totalPages}
+            </span>
+          </div>
 
-          <CardContent className="p-0">
+          <div>
             {isLoading ? (
-              <div className="py-16 flex flex-col items-center justify-center gap-3 text-slate-400 text-sm">
-                <span className="h-7 w-7 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+              <div className="py-14 flex items-center justify-center gap-2 text-slate-400 text-xs font-mono">
+                <span className="h-4 w-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
                 <span>Loading products...</span>
               </div>
             ) : products.length === 0 ? (
-              /* Empty State */
-              <div className="py-16 text-center max-w-sm mx-auto px-4">
-                <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3 text-slate-400">
-                  <Package className="h-6 w-6" />
-                </div>
-                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+              <div className="py-14 text-center max-w-sm mx-auto px-4">
+                <p className="text-sm font-medium text-slate-900 dark:text-white">
                   No products found
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-4">
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-3">
                   {search || lowStockFilter
-                    ? 'No products match your search or filter criteria. Try clearing filters.'
-                    : 'Get started by creating your first inventory product record.'}
+                    ? 'No products match the current search or filter.'
+                    : 'Start by creating your first product.'}
                 </p>
                 {search || lowStockFilter ? (
                   <Button
@@ -279,9 +273,8 @@ export default function ProductsPage() {
                       setLowStockFilter(false);
                       loadProducts(1, '', false);
                     }}
-                    className="text-xs"
                   >
-                    Clear Filters
+                    Clear filters
                   </Button>
                 ) : (
                   <Button
@@ -290,25 +283,23 @@ export default function ProductsPage() {
                       setEditingProduct(null);
                       setFormModalOpen(true);
                     }}
-                    className="text-xs"
                   >
-                    <Plus className="h-3.5 w-3.5 mr-1" /> Add Product
+                    <Plus className="h-3 w-3 mr-1" /> Add product
                   </Button>
                 )}
               </div>
             ) : (
-              /* Table Data */
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
+                <table className="w-full text-left text-xs">
                   <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-800 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-800/30">
-                      <th className="py-3 px-4">Product</th>
-                      <th className="py-3 px-4">SKU</th>
-                      <th className="py-3 px-4 text-center">Stock Quantity</th>
-                      <th className="py-3 px-4 text-right">Cost Price</th>
-                      <th className="py-3 px-4 text-right">Selling Price</th>
-                      <th className="py-3 px-4 text-center">Stock Status</th>
-                      <th className="py-3 px-4 text-right">Actions</th>
+                    <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 bg-slate-50/60 dark:bg-slate-850/40">
+                      <th className="py-2.5 px-4 font-medium">Product</th>
+                      <th className="py-2.5 px-3 font-medium">SKU</th>
+                      <th className="py-2.5 px-3 text-center font-medium">Stock level</th>
+                      <th className="py-2.5 px-3 text-right font-medium">Cost</th>
+                      <th className="py-2.5 px-3 text-right font-medium">Price</th>
+                      <th className="py-2.5 px-3 text-center font-medium">Status</th>
+                      <th className="py-2.5 px-4 text-right font-medium">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
@@ -323,25 +314,26 @@ export default function ProductsPage() {
                       return (
                         <tr
                           key={product.id}
-                          className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                          className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors duration-150"
                         >
-                          <td className="py-3 px-4">
-                            <div className="font-semibold text-slate-900 dark:text-slate-100">
+                          <td className="py-2.5 px-4">
+                            <span className="font-medium text-slate-900 dark:text-slate-100">
                               {product.name}
-                            </div>
+                            </span>
                             {product.description && (
-                              <div className="text-xs text-slate-400 truncate max-w-xs mt-0.5">
+                              <span className="text-[11px] text-slate-400 truncate max-w-xs block mt-0.5">
                                 {product.description}
-                              </div>
+                              </span>
                             )}
                           </td>
-                          <td className="py-3 px-4 font-mono text-xs text-slate-600 dark:text-slate-300">
+                          <td className="py-2.5 px-3 font-mono text-[11px] text-slate-600 dark:text-slate-300">
                             {product.sku}
                           </td>
-                          <td className="py-3 px-4 text-center">
+                          <td className="py-2.5 px-3 text-center">
                             <div className="flex items-center justify-center gap-1.5">
                               <StockQuantityControl
                                 product={product}
+                                size="sm"
                                 onUpdateSuccess={(updatedProduct) => {
                                   setProducts((prev) =>
                                     prev.map((p) =>
@@ -349,58 +341,58 @@ export default function ProductsPage() {
                                     )
                                   );
                                   setSuccessToast(
-                                    `Stock for "${product.name}" updated to ${updatedProduct.quantity}`
+                                    `Stock for "${product.name}" set to ${updatedProduct.quantity}`
                                   );
                                 }}
                                 onError={(errMsg) => setError(errMsg)}
                               />
                               <button
                                 onClick={() => setQuantityModalProduct(product)}
-                                className="p-1 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 rounded transition-colors"
-                                title="Bulk stock adjustment modal"
+                                className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded"
+                                title="Bulk adjust"
                                 aria-label="Open bulk adjustment modal"
                               >
-                                <Layers className="h-3.5 w-3.5" />
+                                <Layers className="h-3 w-3" />
                               </button>
                             </div>
                           </td>
-                          <td className="py-3 px-4 text-right font-mono text-xs text-slate-600 dark:text-slate-300">
+                          <td className="py-2.5 px-3 text-right font-mono tabular-nums text-slate-600 dark:text-slate-400">
                             {product.costPrice !== null && product.costPrice !== undefined
                               ? `$${Number(product.costPrice).toFixed(2)}`
                               : '—'}
                           </td>
-                          <td className="py-3 px-4 text-right font-mono text-xs text-slate-600 dark:text-slate-300">
+                          <td className="py-2.5 px-3 text-right font-mono tabular-nums text-slate-600 dark:text-slate-400">
                             {product.sellingPrice !== null && product.sellingPrice !== undefined
                               ? `$${Number(product.sellingPrice).toFixed(2)}`
                               : '—'}
                           </td>
-                          <td className="py-3 px-4 text-center">
+                          <td className="py-2.5 px-3 text-center">
                             {isOutOfStock ? (
-                              <Badge variant="danger">Out of Stock</Badge>
+                              <Badge variant="danger">Out of stock</Badge>
                             ) : isLowStock ? (
-                              <Badge variant="warning">Low Stock</Badge>
+                              <Badge variant="warning">Low stock</Badge>
                             ) : (
-                              <Badge variant="success">In Stock</Badge>
+                              <Badge variant="success">In stock</Badge>
                             )}
                           </td>
-                          <td className="py-3 px-4 text-right">
+                          <td className="py-2.5 px-4 text-right">
                             <div className="flex items-center justify-end gap-1">
                               <button
                                 onClick={() => {
                                   setEditingProduct(product);
                                   setFormModalOpen(true);
                                 }}
-                                className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                                title="Edit Product"
+                                className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                                title="Edit product"
                               >
-                                <Edit2 className="h-4 w-4" />
+                                <Edit2 className="h-3.5 w-3.5" />
                               </button>
                               <button
                                 onClick={() => setDeletingProduct(product)}
-                                className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
-                                title="Delete Product"
+                                className="p-1 rounded text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                                title="Delete product"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-3.5 w-3.5" />
                               </button>
                             </div>
                           </td>
@@ -411,27 +403,27 @@ export default function ProductsPage() {
                 </table>
               </div>
             )}
-          </CardContent>
+          </div>
 
           {/* Pagination Controls */}
           {pagination.totalPages > 1 && (
-            <div className="px-6 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
-              <div>
-                Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
+            <div className="px-4 py-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+              <span className="font-mono text-[11px] tabular-nums">
+                Showing {(pagination.page - 1) * pagination.limit + 1}–
                 {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                {pagination.total} products
-              </div>
-              <div className="flex items-center gap-1.5">
+                {pagination.total}
+              </span>
+              <div className="flex items-center gap-1">
                 <Button
                   variant="outline"
                   size="sm"
                   disabled={pagination.page <= 1}
                   onClick={() => loadProducts(pagination.page - 1)}
-                  className="px-2 py-1 text-xs"
+                  className="px-2 py-0.5 text-xs h-6.5"
                 >
-                  <ChevronLeft className="h-3.5 w-3.5 mr-1" /> Prev
+                  <ChevronLeft className="h-3 w-3 mr-0.5" /> Prev
                 </Button>
-                <span className="px-2 font-semibold text-slate-700 dark:text-slate-300">
+                <span className="px-1.5 font-mono text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                   {pagination.page} / {pagination.totalPages}
                 </span>
                 <Button
@@ -439,9 +431,9 @@ export default function ProductsPage() {
                   size="sm"
                   disabled={pagination.page >= pagination.totalPages}
                   onClick={() => loadProducts(pagination.page + 1)}
-                  className="px-2 py-1 text-xs"
+                  className="px-2 py-0.5 text-xs h-6.5"
                 >
-                  Next <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                  Next <ChevronRight className="h-3 w-3 ml-0.5" />
                 </Button>
               </div>
             </div>
@@ -478,4 +470,3 @@ export default function ProductsPage() {
     </AppLayout>
   );
 }
-
